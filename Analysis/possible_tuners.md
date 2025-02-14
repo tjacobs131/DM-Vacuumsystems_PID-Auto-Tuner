@@ -13,3 +13,5 @@ Bump method + ziegler-nichols / Cohen-Coon
 
 Relay method
 https://www.controleng.com/relay-method-automates-pid-loop-tuning/
+
+Lambda tuner
