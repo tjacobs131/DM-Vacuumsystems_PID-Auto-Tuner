@@ -13,6 +13,8 @@ Finished Ziegler-Nichols tuner implementation on simulation
     Refactored simulation code (following D&M conventions)
 Collected information about tuners
     Physics makes big difference, needs special tuning
+Created HMI for heater simulation
+Added possible tuners
 
 # ?
     - How large is the dead-time compared to cycle-time? 0.5x? 2x?
