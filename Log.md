@@ -15,6 +15,7 @@ Collected information about tuners
     Physics makes big difference, needs special tuning
 Created HMI for heater simulation
 Added possible tuners
+    Started writing tuning methods evaluation
 
 # ?
     - How large is the dead-time compared to cycle-time? 0.5x? 2x?
