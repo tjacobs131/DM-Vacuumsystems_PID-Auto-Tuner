@@ -16,6 +16,9 @@ Collected information about tuners
 Created HMI for heater simulation
 Added possible tuners
     Started writing tuning methods evaluation
+Understand IFT tuning gradient descent method
+    Decided to use Ziegler-Nichols for sure as a baseline result
 
 # ?
     - How large is the dead-time compared to cycle-time? 0.5x? 2x?
+    - Parallel or series PID?
