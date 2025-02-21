@@ -20,5 +20,7 @@ Understand IFT tuning gradient descent method
     Decided to use Ziegler-Nichols for sure as a baseline result
 
 # ?
+    - How long is the measurement time / time constant?
     - How large is the dead-time compared to cycle-time? 0.5x? 2x?
-    - Parallel or series PID?
+    - Change PID from parallel to series?
+    - Switch to 1 MIMO PID? (only for modern tuners)
