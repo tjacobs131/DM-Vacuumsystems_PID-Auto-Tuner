@@ -19,8 +19,14 @@ Added possible tuners
 Understand IFT tuning gradient descent method
     Decided to use Ziegler-Nichols for sure as a baseline result
 
+# Week 3
+Implemented project plan feedback
+Handed in project plan
+Refined tuner evaluation
+
 # ?
     - How long is the measurement time / time constant?
     - How large is the dead-time compared to cycle-time? 0.5x? 2x?
     - Change PID from parallel to series?
     - Switch to 1 MIMO PID? (only for modern tuners)
+    - Neural network approach?
