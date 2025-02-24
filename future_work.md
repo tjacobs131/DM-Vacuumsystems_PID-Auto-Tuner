@@ -1,0 +1,1 @@
+Investigate neural networks for PID tuning. Maybe start collecting data. Also for preventative maintencance.
