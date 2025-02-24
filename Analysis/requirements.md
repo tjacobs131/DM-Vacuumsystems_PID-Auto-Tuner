@@ -1,17 +1,19 @@
 # Requirements
 
-1. The tuner will be implemented on a Beckhoff PLC (IPC).
-2. The tuner will be used for heating systems.
-3. The heating system will have a slow response to output signal.
-4. The machine will have multiple PID controllers, each for one heating zone.
-5. The tuner will be tested on a small-scale test setup.<br><br>
+## Functional Requirements
+1.	The tuner will be implemented on a Beckhoff PLC (IPC).
+2.	The tuner will be used for heating systems.
+3.	The heating system will have a slow response to output signal.
+4.	The vacuum system will have multiple PID controllers.
 
-6. The tuner shall run and complete without human intervention.
-7. The tuner shall function on full-scale vacuum systems with heating.
-8. The tuner shall not need to be re-run on the same system.
-9. The tuning time shall be minimized.
-10. The system shall stabilize with 1 celcius accuracy on the setpoint.<br><br>
+1.	The tuner shall run automatically and find PID variables.
+2.	The tuner shall function on full-scale vacuum systems with multiple heating zones.
+3.	The tuner shall not need to be re-run on the same system.
+4.	The tuning time shall be minimized.
+5.	The system shall stabilize with 1°C on the set temperature.
 
-11. The tuner should be easy to integrate in an existing vacuum system.
-12. Overshoot should be minimized.
-13. System should reach set temperature as quickly as possible.
+## Non-Functional Requirements
+1. 	The tuner should be easy to integrate in an existing vacuum system.
+2. 	The tuner should work with PID control systems besides heating.
+3. 	Overshoot should be minimized.
+4. 	System should reach set temperature as quickly as possible.
