@@ -23,10 +23,11 @@ Understand IFT tuning gradient descent method
 Implemented project plan feedback
 Handed in project plan
 Refined tuner evaluation
+    Added Skogestad's IMC to tuner evaluation
 
 # ?
     - How long is the measurement time / time constant?
     - How large is the dead-time compared to cycle-time? 0.5x? 2x?
-    - Change PID from parallel to series?
+    - Are any specific tuning methods in use now? - What does trial and error tuning look like exactly in terms of initial PID variables?
     - Switch to 1 MIMO PID? (only for modern tuners)
     - Neural network approach?
