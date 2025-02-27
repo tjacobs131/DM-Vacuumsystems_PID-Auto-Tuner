@@ -14,6 +14,5 @@
 
 ## Non-Functional Requirements
 1. 	The tuner should be easy to integrate in an existing vacuum system.
-2. 	The tuner should work with PID control systems besides heating.
-3. 	Overshoot should be minimized.
-4. 	System should reach set temperature as quickly as possible.
+2. 	Overshoot should be minimized.
+3. 	System should reach set temperature as quickly as possible.
