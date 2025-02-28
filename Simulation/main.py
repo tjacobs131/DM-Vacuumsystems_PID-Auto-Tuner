@@ -13,12 +13,29 @@ class Main:
 
     def main(self):
         sim = hs.HeatSim(self.dt)
-        pid = PID(100.0, 0.05, 0.2, 100, self.dt)
+        pid = PID(30.0, 0.17, 0.4, 100, self.dt)
         plot = Plotter()
         heater_power = 100 # (%)
+        
+        stable_buffer = []
+        stable_threshold = 0.5  # allowed variation in °C
+        stable_samples_required = int(5 / self.dt)  # number of samples in 5 seconds
+        setpoint_changed = False
 
         try:
             while True:
+                # Update stability buffer
+                stable_buffer.append(sim.read_temperature())
+                if len(stable_buffer) > stable_samples_required:
+                    stable_buffer.pop(0)
+                
+                # Check if temperature has been stable for 5 seconds
+                if (len(stable_buffer) == stable_samples_required and 
+                    (max(stable_buffer) - min(stable_buffer) < stable_threshold) and 
+                    not setpoint_changed):
+                    # We can now step up the heater power
+                    pass
+                
                 # Get heater power
                 process_variable = sim.read_temperature()
                 heater_power = pid.update_parallel(process_variable)
@@ -33,7 +50,7 @@ class Main:
                 # Wait for delta time
                 sleep(self.dt)
 
-                print('Current Temp: ' + str(round(sim.read_temperature(), 1)) + ' | Heater Power: ' + str(heater_power))
+                print('Current Temp: ' + str(round(sim.read_temperature(), 1)) + '°C | Heater Power: ' + str(round(heater_power, 1)) + '%')
 
                 plot.add_temperature(sim.read_temperature())
         except KeyboardInterrupt:
