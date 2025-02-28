@@ -39,4 +39,4 @@ class PID():
 
     def update_setpoint(self, setpoint):
         # Update the setpoint
-        pass
+        self.setpoint = setpoint
