@@ -1,5 +1,5 @@
 import HeatSim.heat_sim as hs
-from PID.pid import PID
+from PID.parallel_pid import Parallel_PID
 from Plotter.plotter import Plotter
 from time import sleep
 
@@ -13,8 +13,9 @@ class Main:
 
     def main(self):
         sim = hs.HeatSim(self.dt)
-        pid = PID(30.0, 0.17, 0.4, 100, self.dt)
+        pid = Parallel_PID(100, self.dt)
         plot = Plotter()
+
         heater_power = 100 # (%)
         
         stable_buffer = []
@@ -38,8 +39,9 @@ class Main:
                 
                 # Get heater power
                 process_variable = sim.read_temperature()
-                heater_power = pid.update_parallel(process_variable)
+                heater_power = pid.get_output(process_variable)
 
+                # Clamp heater power
                 if heater_power < 0:
                     heater_power = 0
                 elif heater_power > 100:
@@ -51,7 +53,6 @@ class Main:
                 sleep(self.dt)
 
                 print('Current Temp: ' + str(round(sim.read_temperature(), 1)) + '°C | Heater Power: ' + str(round(heater_power, 1)) + '%')
-
                 plot.add_temperature(sim.read_temperature())
         except KeyboardInterrupt:
             plot.plot()

@@ -10,10 +10,11 @@ class HeatSim:
 
     SPEEDUP = 400
 
-    def __init__(self, dt, delay=0.5):
+    def __init__(self, dt, delay=0.5, noise=0.0):
         self.dt = dt
         self.current_temp = self.ROOM_TEMP
         self.thermal_mass = self.MASS * self.SPECIFIC_HEAT  # J/K
+        self.noise = noise
 
         self.delay_steps = int(delay / dt)
         self.delay_buffer = deque([self.current_temp] * self.delay_steps, maxlen=self.delay_steps)
@@ -31,7 +32,11 @@ class HeatSim:
         # Update temperature
         self.current_temp += delta_temp
 
+        # Simulate delay 
         self.delay_buffer.append(self.current_temp)
+
+        # Add noise
+        self.current_temp += np.random.normal(0, self.noise)
 
     def read_temperature(self):
         return self.delay_buffer[0]
