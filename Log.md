@@ -28,6 +28,8 @@ Refined tuner evaluation
 # ?
     - How long is the measurement time / time constant?
     - How large is the dead-time compared to cycle-time? 0.5x? 2x?
+    - Using a parallel, series or ideal PID?
+    - Switch to ideal?
+    - D necessary? Only PI?
     - Are any specific tuning methods in use now? - What does trial and error tuning look like exactly in terms of initial PID variables?
-    - Switch to 1 MIMO PID? (only for modern tuners)
     - Neural network approach?
