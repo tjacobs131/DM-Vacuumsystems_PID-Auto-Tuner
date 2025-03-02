@@ -25,7 +25,7 @@ class EvaluateParallelPID(PID):
         ]
         self.current_setpoint = self.initial_setpoint
         self.setpoint_index = 0
-        self.ramp_rate = 0.1                  # Adjust ramp rate as needed (per second)
+        self.ramp_rate = 10                  # ramp rate (per second)
         self.phase = 'initial_stabilization'
         self.stable_threshold = 0.5           # Temperature threshold for stability
         self.stable_duration = 5.0            # Duration to consider stable (seconds)

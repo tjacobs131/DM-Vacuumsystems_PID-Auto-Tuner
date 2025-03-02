@@ -29,8 +29,10 @@ class Skogestad(PID):
     def calculate_output(self, process_variable: float, setpoint: float, dt: float) -> float:
         # If in final cooldown, compute PID settings according to SIMC rules.
         if self.final_cooldown:
-            if self.check_stability(process_variable, dt, self.stable_threshold, 5):
+            if abs(self.cooldown_start_temp - process_variable) <= self.stable_threshold * 2:
                 self.stable_buffer = []
+            if (self.check_stability(process_variable, dt, self.stable_threshold, 5)):
+                
                 # SIMC formulas for a PI controller (first-order plus delay process):
                 # Kp = τ / (K*(λ + θ))
                 # Ti = min(τ, k1*(λ + θ))
@@ -91,7 +93,7 @@ class Skogestad(PID):
                 if self.rise_time is None or self.rise_time < 0:
                     self.rise_time = dt  # fallback if estimation fails
 
-
+                self.cooldown_start_temp = process_variable
                 self.final_cooldown = True
                 return 0
 

@@ -22,7 +22,7 @@ class Main:
     max_output = 100
     min_output = 0
 
-    delay = 2.0
+    delay = 8.0
     noise = 0.02
 
     def __init__(self):
