@@ -1,8 +1,8 @@
-import PID.parallel_pid as pid
+from pid_controllers.parallel_pid import Parallel_PID
 import pid_config
 import math
 
-class AstromHagglund(pid.Parallel_PID):
+class AstromHagglund(Parallel_PID):
     def __init__(self, target_iterations: int = 10):
         self.final_cooldown = False
 

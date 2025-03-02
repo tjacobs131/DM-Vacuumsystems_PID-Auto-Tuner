@@ -1,10 +1,12 @@
 import sys
-import HeatSim.heat_sim as hs
-from Plotter.plotter import Plotter
+import heat_simulation.heat_sim as hs
+from plotters.temp_controller_output_plot import Plotter
 from time import sleep
-from PID.parallel_pid import Parallel_PID
+from pid_controllers.parallel_pid import Parallel_PID
+from pid_controllers.evaluate_parallel_pid import EvaluateParallelPID
 import pid_config
-from Tuners import astrom_hagglund, skogestad
+from tuners.astrom_hagglund import AstromHagglund
+from tuners.skogestad import Skogestad
 
 class Main:
     dt = 0.04
@@ -12,20 +14,33 @@ class Main:
     last_i = pid_config.ki
     last_d = pid_config.kd
     
-    selected_tuner = skogestad.Skogestad
-    selected_pid = Parallel_PID
+    selected_tuner = Skogestad
+    selected_pid = EvaluateParallelPID
 
     heater_power = 0 # (%)
+    setpoint = 100
+    max_output = 100
+    min_output = 0
+
+    delay = 2.0
+    noise = 0.02
 
     def __init__(self):
-        pass
+        self.plot = Plotter(
+            chosen_tuner=self.selected_tuner,
+            max_output=self.max_output,
+            min_output=self.min_output,
+            simulated_delay=self.delay,
+            simulated_noise=self.noise
+        )
+
+        pid_config.setpoint = 100
 
     def main(self):
-        sim = hs.HeatSim(self.dt, delay=0.2)
-        plot = Plotter()
+        sim = hs.HeatSim(self.dt, delay=self.delay, noise=self.noise)
         
         if self.selected_tuner == None:
-            pid = self.selected_pid(kp, ki, kd)
+            pid = self.selected_pid(self.max_output, self.min_output, kp, ki, kd)
         else:
             pid = self.selected_tuner()
 
@@ -38,7 +53,7 @@ class Main:
                 if (self.last_p != kp or self.last_i != ki or self.last_d != kd):
                     # The settings changed during execution
                     # Reset the selected (potentially different) pid controller with new settings
-                    pid = self.selected_pid(kp, ki, kd)
+                    pid = self.selected_pid(self.max_output, self.min_output, kp, ki, kd)
                     self.last_p = kp
                     self.last_i = ki
                     self.last_d = kd
@@ -46,29 +61,20 @@ class Main:
 
                 # Get heater power
                 process_variable = sim.read_temperature()
-                pid_output = pid.calculate_output(process_variable, 100, self.dt)
+                pid_output = pid.calculate_output(process_variable, pid_config.setpoint, self.dt)
 
-                # Add a smoothing factor based on dt
-                tau = 0.05  # Time constant for lag effect
-                alpha = self.dt / (tau + self.dt)  # Exponential smoothing factor
-
-                # Update heater power with lag
-                self.heater_power = (1 - alpha) * self.heater_power + alpha * pid_output
-
-                # Clamp heater power
-                self.heater_power = max(0, min(100, self.heater_power))
-
-                sim.update(self.heater_power)
+                sim.update(pid_output)
 
                 # Wait for delta time
-                sleep(self.dt)
+                # sleep(self.dt)
 
-                print('Current Temp: ' + str(round(sim.read_temperature(), 1)) + '°C | Heater Power: ' + str(round(self.heater_power, 1)) + '%')
-                plot.add_temperature(sim.read_temperature())
+                print('Current Temp: ' + str(round(process_variable, 2)) + '°C | PID Output: ' + str(round(pid_output, 1)) + '%')
+                self.plot.add_temperature(process_variable, self.dt, pid_output, pid_config.setpoint)
         except KeyboardInterrupt:
-            plot.plot()
-            plot.show()
+            self.plot.plot()
+            self.plot.show()
             sys.exit(0)
 
 if __name__ == "__main__":
+
     Main.main(Main())

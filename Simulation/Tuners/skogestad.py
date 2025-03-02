@@ -1,7 +1,7 @@
-import PID.parallel_pid as pid
+from pid_controllers.pid import PID
 import pid_config
 
-class Skogestad(pid.Parallel_PID):
+class Skogestad(PID):
     final_cooldown = False
 
     initial_output = 40
@@ -16,7 +16,7 @@ class Skogestad(pid.Parallel_PID):
     time_data = []
     output_data = []
 
-    stable_threshold = 0.5  # allowed variation in °C
+    stable_threshold = 0.3  # allowed variation in °C
 
     dead_time = None
     rise_time = None  # estimated process time constant τ
@@ -34,8 +34,8 @@ class Skogestad(pid.Parallel_PID):
                 # SIMC formulas for a PI controller (first-order plus delay process):
                 # Kp = τ / (K*(λ + θ))
                 # Ti = min(τ, k1*(λ + θ))
-                k1 = 10  # Lower for faster disturbance rejection
-                # Choose λ as a user-tunable parameter; here we ensure it is at least the dead time.
+                k1 = 10  # Lower this for faster disturbance rejection
+                # Choose λ as a user-tunable parameter, here we ensure it is at least the dead time.
                 self.lambda_param = max(self.dead_time, dt)
                 Kp = self.rise_time / (self.k * (self.lambda_param + self.dead_time))
                 Ti = min(self.rise_time, k1 * (self.lambda_param + self.dead_time))

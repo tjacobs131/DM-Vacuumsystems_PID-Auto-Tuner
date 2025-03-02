@@ -8,11 +8,10 @@ class HeatSim:
     HEAT_TRANSFER_COEFF = 300.0 # W/K (heat loss to environment)
     ROOM_TEMP = 20.0           # °C
 
-    SPEEDUP = 200
-
     def __init__(self, dt, delay=0.5, noise=0.04):
         self.dt = dt
         self.current_temp = self.ROOM_TEMP
+        self.sensor_temp = self.ROOM_TEMP
         self.thermal_mass = self.MASS * self.SPECIFIC_HEAT  # J/K
         self.noise = noise
 
@@ -36,8 +35,5 @@ class HeatSim:
         # Simulate delay 
         self.delay_buffer.append(self.current_temp)
 
-        # Add noise
-        self.current_temp += np.random.normal(0, self.noise)
-
     def read_temperature(self):
-        return self.delay_buffer[0]
+        return self.delay_buffer[0] + np.random.normal(0, self.noise)

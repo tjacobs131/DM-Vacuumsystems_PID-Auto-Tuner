@@ -3,8 +3,8 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
-from PID.parallel_pid import Parallel_PID
-from Tuners.astrom_hagglund import astrom_hagglund
+from pid_controllers.parallel_pid import Parallel_PID
+from tuners.astrom_hagglund import astrom_hagglund
 
 class TestAstromHagglund(unittest.TestCase):
     
