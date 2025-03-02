@@ -3,28 +3,29 @@ from collections import deque
 
 class HeatSim:
     # Physical constants (adjust values to match your system)
-    MASS = 10.0                # kg (mass of the heater)
+    MASS = 15.0                # kg (mass of the heater)
     SPECIFIC_HEAT = 420.0      # J/(kg·K) (e.g., water: ~4200, metal: ~500)
     HEAT_TRANSFER_COEFF = 300.0 # W/K (heat loss to environment)
     ROOM_TEMP = 20.0           # °C
 
-    SPEEDUP = 400
+    SPEEDUP = 200
 
-    def __init__(self, dt, delay=0.5, noise=0.0):
+    def __init__(self, dt, delay=0.5, noise=0.04):
         self.dt = dt
         self.current_temp = self.ROOM_TEMP
         self.thermal_mass = self.MASS * self.SPECIFIC_HEAT  # J/K
         self.noise = noise
 
-        self.delay_steps = int(delay / dt)
+        self.delay_steps = max(1,int(delay / dt))
         self.delay_buffer = deque([self.current_temp] * self.delay_steps, maxlen=self.delay_steps)
+        self.delay_buffer.append(self.current_temp)
 
     def update(self, heater_power):
         # Heat loss to environment (W)
         heat_loss = self.HEAT_TRANSFER_COEFF * (self.current_temp - self.ROOM_TEMP)
         
         # Net power (W): heater input - heat loss
-        net_power = heater_power * 400 - heat_loss
+        net_power = heater_power * 500 - heat_loss
         
         # Temperature change (dT = (Power * dt) / (mass * specific_heat))
         delta_temp = (net_power * self.dt) / self.thermal_mass
