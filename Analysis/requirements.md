@@ -15,4 +15,4 @@
 ## Non-Functional Requirements
 1. 	The tuner should be easy to integrate in an existing vacuum system.
 2. 	Overshoot should be minimized.
-3. 	System should reach set temperature as quickly as possible.
+3. 	System should reach the set-temperature as quickly as possible.
