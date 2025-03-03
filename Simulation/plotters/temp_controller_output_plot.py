@@ -38,6 +38,8 @@ class Plotter:
         self.ki = pid_config.ki
         self.kd = pid_config.kd
         
+        print("PID in plot: " + str(self.kp) + "-" + str(self.ki) + "-" + str(self.kd))
+        
         fig, ax1 = plt.subplots(figsize=(12, 8))
         
         # Primary y-axis for temperature
@@ -67,7 +69,7 @@ class Plotter:
         # Add a legend
         lines1, labels1 = ax1.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
-        ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+        ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right', bbox_to_anchor=(1.05, 1.15))
         
         # Add text box with configuration information
         info_text = (

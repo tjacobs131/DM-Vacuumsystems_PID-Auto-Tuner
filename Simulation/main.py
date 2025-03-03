@@ -7,6 +7,7 @@ from pid_controllers.evaluate_parallel_pid import EvaluateParallelPID
 import pid_config
 from tuners.astrom_hagglund import AstromHagglund
 from tuners.skogestad import Skogestad
+from tuners.tuner import Tuner
 
 class Main:
     dt = 0.04
@@ -14,7 +15,7 @@ class Main:
     last_i = pid_config.ki
     last_d = pid_config.kd
     
-    selected_tuner = Skogestad
+    selected_tuner = AstromHagglund
     selected_pid = EvaluateParallelPID
 
     heater_power = 0 # (%)
@@ -22,7 +23,7 @@ class Main:
     max_output = 100
     min_output = 0
 
-    delay = 8.0
+    delay = 0.1
     noise = 0.02
 
     def __init__(self):
@@ -42,7 +43,7 @@ class Main:
         if self.selected_tuner == None:
             pid = self.selected_pid(self.max_output, self.min_output, kp, ki, kd)
         else:
-            pid = self.selected_tuner()
+            pid = self.selected_tuner(load_from_config=False)
 
         try:
             while True:
