@@ -15,7 +15,7 @@ class Main:
     last_i = pid_config.ki
     last_d = pid_config.kd
     
-    selected_tuner = AstromHagglund
+    selected_tuner = Skogestad
     selected_pid = EvaluateParallelPID
 
     heater_power = 0 # (%)
@@ -23,7 +23,7 @@ class Main:
     max_output = 100
     min_output = 0
 
-    delay = 0.1
+    delay = 5.0
     noise = 0.02
 
     def __init__(self):

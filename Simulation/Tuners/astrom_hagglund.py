@@ -23,6 +23,8 @@ class AstromHagglund(Parallel_PID):
         # Ultimate gain and period
         self.ku = 0
         self.tu = 0
+        self.kuAvg = 0
+        self.tuAvg = 0
 
         # Mode and output
         self.heating = True
@@ -51,6 +53,7 @@ class AstromHagglund(Parallel_PID):
             if conf:
                 self.load_config(conf)
                 self.heating = False
+                self.cooldown_start_temp = 9999
                 self.final_cooldown = True
 
     def calculate_output(self, process_variable: float, setpoint: float, dt: float) -> float:
@@ -59,9 +62,10 @@ class AstromHagglund(Parallel_PID):
             if abs(self.cooldown_start_temp - process_variable) <= self.stable_threshold * 2:
                 self.stable_buffer = []
             if self.check_stability(process_variable, dt, self.stable_threshold, 5):
-                pid_config.kp = self.pAvg / self.iterations
-                pid_config.ki = self.iAvg / self.iterations
-                pid_config.kd = self.dAvg / self.iterations
+                
+                pid_config.kp = 0.6 * self.ku
+                pid_config.ki = 0.5 * self.tu
+                pid_config.kd = 0.125 * self.tu
                 Tuner.store_tuner_config("astromhagglund", self.get_config())
             return self.min_controller_output
 
@@ -69,9 +73,10 @@ class AstromHagglund(Parallel_PID):
         if self.iterations > self.target_iterations + self.iterations_to_skip:
             self.heating = False
             self.final_cooldown = True
-            self.cooldown_start_temp = process_variable  
+            self.cooldown_start_temp = process_variable
+            self.ku = self.kuAvg / self.iterations
+            self.tu = self.tuAvg / self.iterations  
             # Save the averaged values to config.
-            Tuner.store_tuner_config("astromhagglund", self.get_config())
             return self.min_controller_output
 
         # Record min/max process values.
@@ -94,18 +99,20 @@ class AstromHagglund(Parallel_PID):
             self.tlow = self.time2 - self.time1
 
             amplitude_pv = self.max_recorded_output - self.min_recorded_output
-            if amplitude_pv > 0:
-                self.ku = (4 * self.max_controller_output - self.min_controller_output) / (math.pi * amplitude_pv)
-                self.tu = self.thigh + self.tlow
-
-                self.kp = 0.6 * self.ku
-                self.ki = 0.5 * self.tu
-                self.kd = 0.125 * self.tu
-
+            if amplitude_pv > 0:                
                 if self.iterations >= self.iterations_to_skip:
-                    self.pAvg += self.kp
-                    self.iAvg += self.ki
-                    self.dAvg += self.kd
+                    self.kuAvg += (4 * self.max_controller_output - self.min_controller_output) / (math.pi * amplitude_pv)
+                    self.tuAvg += self.thigh + self.tlow
+                    
+
+                # self.kp = 0.6 * self.ku
+                # self.ki = 0.5 * self.tu
+                # self.kd = 0.125 * self.tu
+
+                # if self.iterations >= self.iterations_to_skip:
+                #     self.pAvg += self.kp
+                #     self.iAvg += self.ki
+                #     self.dAvg += self.kd
                     
                        
                 
@@ -116,21 +123,16 @@ class AstromHagglund(Parallel_PID):
         # Set controller output based on mode.
         self.controller_output = self.max_controller_output if self.heating else self.min_controller_output
         return self.controller_output
-
+    
     def get_config(self) -> dict:
-        # Save averages; later the PID gains are computed as avg / (iterations - skip)
-        return {"pAvg": self.pAvg, "iAvg": self.iAvg, "dAvg": self.dAvg, "iterations": self.iterations}
+        return {
+            "ku": self.ku,
+            "tu": self.tu
+        }
 
     def load_config(self, config: dict):
-        # Convert loaded values to float and assign.
-        self.pAvg = float(config.get("pAvg", 0))
-        self.iAvg = float(config.get("iAvg", 0))
-        self.dAvg = float(config.get("dAvg", 0))
-        self.iterations = int(config.get("iterations", self.iterations_to_skip))
-        count = max(1, self.iterations - self.iterations_to_skip)
-        pid_config.kp = self.pAvg / count
-        pid_config.ki = self.iAvg / count
-        pid_config.kd = self.dAvg / count
+        self.ku = float(config.get("ku", 0))
+        self.tu = float(config.get("tu", 0))
 
     def get_config_names(self) -> List[str]:
-        return ["pAvg", "iAvg", "dAvg", "iterations"]
+        return ["ku", "tu"]

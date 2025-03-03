@@ -22,6 +22,8 @@ class Skogestad(Tuner):
     rise_time = None  # estimated process time constant
     lambda_param = None  # closed-loop time constant
     k = None  # process gain
+    
+    initial_process_variable = None
 
     def __init__(self, load_from_config: bool):
         self.load_from_config = load_from_config
@@ -37,6 +39,8 @@ class Skogestad(Tuner):
             self.output_data = [0]
 
     def calculate_output(self, process_variable: float, setpoint: float, dt: float) -> float:
+        if self.initial_process_variable == None:
+            self.initial_process_variable = process_variable
         self.time_data.append(dt)
         self.output_data.append(process_variable)
         if self.final_cooldown:
@@ -44,11 +48,10 @@ class Skogestad(Tuner):
                 self.stable_buffer = []
             if self.check_stability(process_variable, dt, self.stable_threshold, 45):
                 # SIMC formulas for a PI(D) controller:
-                k1 = 0.2
+                k1 = 3.0
                 self.lambda_param = max(self.dead_time, dt)
                 Kp = self.rise_time / (self.k * (self.lambda_param + self.dead_time))
                 Ti = min(self.rise_time, k1 * (self.lambda_param + self.dead_time))
-                print(self.rise_time)
                 pid_config.kp = Kp
                 pid_config.ki = Kp / Ti
                 pid_config.kd = 0
@@ -74,7 +77,7 @@ class Skogestad(Tuner):
                 self.dead_time = 0
                 for i, y in enumerate(self.output_data):
                     self.dead_time += self.time_data[i]
-                    if y >= self.baseline + 0.02 * (final_output - self.baseline):
+                    if y >= self.initial_process_variable + 0.005 * (final_output - self.initial_process_variable):
                         break
 
                 target = self.baseline + 0.632 * (final_output - self.baseline)
@@ -87,6 +90,7 @@ class Skogestad(Tuner):
                     if y >= target:
                         break
                 self.rise_time = self.rise_time - self.baseline_time
+
                 if self.rise_time <= 0:
                     self.rise_time = dt
                 self.cooldown_start_temp = process_variable

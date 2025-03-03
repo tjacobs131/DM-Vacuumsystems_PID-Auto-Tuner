@@ -38,8 +38,6 @@ class Plotter:
         self.ki = pid_config.ki
         self.kd = pid_config.kd
         
-        print("PID in plot: " + str(self.kp) + "-" + str(self.ki) + "-" + str(self.kd))
-        
         fig, ax1 = plt.subplots(figsize=(12, 8))
         
         # Primary y-axis for temperature
@@ -83,8 +81,8 @@ class Plotter:
         
         # Position the text box in the top left corner with more room
         # Create a more spaced-out and noticeable text box
-        plt.figtext(0.02, 0.85, info_text, fontsize=10,
-                bbox=dict(facecolor='white', alpha=0.9, boxstyle='round,pad=0.7',
+        plt.figtext(0.005, 0.82, info_text, fontsize=10,
+                bbox=dict(facecolor='white', alpha=0.9, boxstyle='round,pad=0.4',
                             edgecolor='gray', linewidth=1))
         
         # Adjust layout to make room for the text box and title
