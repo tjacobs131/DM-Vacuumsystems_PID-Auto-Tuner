@@ -1,6 +1,6 @@
 import sys
 import heat_simulation.heat_sim as hs
-from plotters.temp_controller_output_plot import Plotter
+from plotters.plot_pid_sim import Plotter
 from time import sleep
 from pid_controllers.parallel_pid import Parallel_PID
 from pid_controllers.evaluate_parallel_pid import EvaluateParallelPID
@@ -10,12 +10,18 @@ from tuners.skogestad import Skogestad
 from tuners.tuner import Tuner
 
 class Main:
-    dt = 0.04
+    dt = 0.02
+    sim_time = 0
+    
+    sim_mass = 40.0
+    sim_specific_heat = 500.0
+    
     last_p = pid_config.kp
     last_i = pid_config.ki
     last_d = pid_config.kd
     
     selected_tuner = Skogestad
+    load_from_config = True
     selected_pid = EvaluateParallelPID
 
     heater_power = 0 # (%)
@@ -23,30 +29,35 @@ class Main:
     max_output = 100
     min_output = 0
 
-    delay = 5.0
+    delay = 30.0
     noise = 0.02
+    
+    done_tuning_time = -1.0
 
     def __init__(self):
         self.plot = Plotter(
             chosen_tuner=self.selected_tuner,
-            max_output=self.max_output,
-            min_output=self.min_output,
+            dt=self.dt,
+            mass=self.sim_mass,
+            specific_heat=self.sim_specific_heat,
             simulated_delay=self.delay,
-            simulated_noise=self.noise
+            simulated_noise=self.noise,
         )
 
         pid_config.setpoint = 100
 
     def main(self):
-        sim = hs.HeatSim(self.dt, delay=self.delay, noise=self.noise)
+        sim = hs.HeatSim(self.dt, mass=self.sim_mass, specific_heat=self.sim_specific_heat, delay=self.delay, noise=self.noise)
         
         if self.selected_tuner == None:
             pid = self.selected_pid(self.max_output, self.min_output, kp, ki, kd)
         else:
-            pid = self.selected_tuner(load_from_config=False)
+            pid = self.selected_tuner(load_from_config=self.load_from_config)
 
         try:
             while True:
+                self.sim_time += self.dt
+                
                 kp = pid_config.kp
                 ki = pid_config.ki
                 kd = pid_config.kd
@@ -59,6 +70,9 @@ class Main:
                     self.last_i = ki
                     self.last_d = kd
                     print('PID config changed - Kp: ' + str(pid_config.kp) + ' | Ki: ' + str(pid_config.ki) + ' | Kd: ' + str(pid_config.kd))
+                    
+                    if not self.load_from_config: # Only if we are measuring the system dynamics again
+                        self.done_tuning_time = self.sim_time - self.dt # We remove one dt otherwise we get one datapoint from the eval phase
 
                 # Get heater power
                 process_variable = sim.read_temperature()
@@ -72,7 +86,7 @@ class Main:
                 print('Current Temp: ' + str(round(process_variable, 2)) + '°C | PID Output: ' + str(round(pid_output, 1)) + '%')
                 self.plot.add_temperature(process_variable, self.dt, pid_output, pid_config.setpoint)
         except KeyboardInterrupt:
-            self.plot.plot()
+            self.plot.plot(self.done_tuning_time)
             self.plot.show()
             sys.exit(0)
 

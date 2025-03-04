@@ -3,15 +3,17 @@ from collections import deque
 
 class HeatSim:
     # Physical constants (adjust values to match your system)
-    MASS = 40.0                # kg (mass of the heater)
-    SPECIFIC_HEAT = 420.0      # J/(kg·K) (e.g., water: ~4200, metal: ~500)
+    MASS = 0.0                # kg (mass of the heater)
+    SPECIFIC_HEAT = 0.0      # J/(kg·K) (e.g., water: ~4200, metal: ~500)
     HEAT_TRANSFER_COEFF = 150.0 # W/K (heat loss to environment)
     ROOM_TEMP = 20.0           # °C
 
-    def __init__(self, dt, delay=0.5, noise=0.04):
+    def __init__(self, dt, mass = 40, specific_heat = 420, delay=0.5, noise=0.04):
         self.dt = dt
         self.current_temp = self.ROOM_TEMP
         self.sensor_temp = self.ROOM_TEMP
+        self.MASS = mass
+        self.SPECIFIC_HEAT = specific_heat
         self.thermal_mass = self.MASS * self.SPECIFIC_HEAT  # J/K
         self.noise = noise
 
