@@ -163,9 +163,9 @@ class Plotter:
                 os.makedirs(experiment_set_folder, exist_ok=True)
 
             # Save the file in the chosen folder
-            file_name = f"experiment_{self.experiment}_{title.split(' ')[0]}.png"
+            file_name = f"experiment_{self.experiment}_{title.split(' ')[0]}({str.split(self.chosen_tuner.__module__, '.')[1]}).png"
             full_path = os.path.join(experiment_set_folder, file_name)
-            plt.savefig(full_path)
+            plt.savefig(full_path, dpi=300)
         else:
             print("(Set of) experiments had no id, not saving the plots")
 
