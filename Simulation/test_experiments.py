@@ -33,7 +33,7 @@ if __name__ == "__main__":
             'delay': 15.0,
             'noise': 0.01,
         },
-                {
+        {
             'tuner': 'skogestad',
             'dt': 0.02,
             'sim_mass': 40.0,
@@ -50,6 +50,24 @@ if __name__ == "__main__":
             'setpoint': 100.0,
             'delay': 5.0,
             'noise': 0.08,
+        },
+        {
+            'tuner': 'skogestad',
+            'dt': 0.1,
+            'sim_mass': 40.0,
+            'sim_specific_heat': 400.0,
+            'setpoint': 100.0,
+            'delay': 5.0,
+            'noise': 0.01,
+        },
+        {
+            'tuner': 'skogestad',
+            'dt': 1.0,
+            'sim_mass': 40.0,
+            'sim_specific_heat': 400.0,
+            'setpoint': 100.0,
+            'delay': 5.0,
+            'noise': 0.01,
         },
         
         
@@ -97,6 +115,24 @@ if __name__ == "__main__":
             'setpoint': 100.0,
             'delay': 5.0,
             'noise': 0.08,
+        },
+        {
+            'tuner': 'astromhagglund',
+            'dt': 0.1,
+            'sim_mass': 40.0,
+            'sim_specific_heat': 400.0,
+            'setpoint': 100.0,
+            'delay': 5.0,
+            'noise': 0.01,
+        },
+        {
+            'tuner': 'astromhagglund',
+            'dt': 1.0,
+            'sim_mass': 40.0,
+            'sim_specific_heat': 400.0,
+            'setpoint': 100.0,
+            'delay': 5.0,
+            'noise': 0.01,
         },
     ]
 

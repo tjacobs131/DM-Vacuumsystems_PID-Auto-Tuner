@@ -27,7 +27,7 @@ class EvaluateParallelPID(PID):
         self.setpoint_index = 0
         self.ramp_rate = 100                  # Ramp rate (per second)
         self.phase = 'initial_stabilization'
-        self.stable_threshold = 0.5           # Temperature threshold for stability
+        self.stable_threshold = 0.2           # Temperature threshold for stability
         self.stable_duration = 5.0            # Duration to consider stable (seconds)
         self.dwell_time = 10.0                # Time to stay at each setpoint after stability (seconds)
         self.stable_time = 0                  # Time counter for stability check
@@ -42,6 +42,7 @@ class EvaluateParallelPID(PID):
         self.phase_min_error = float('inf')
         self.last_max_min_update_time = 0
         self.minimum_oscillation_amplitude = 0.5
+        self.noise_tolerance = 0.05  # Tolerance for noise in error signal
 
 
     def reset_oscillation_detection(self, current_time):
@@ -62,10 +63,10 @@ class EvaluateParallelPID(PID):
 
     def detect_oscillation(self, error, current_time):
         updated_max_min = False
-        if error > self.phase_max_error:
+        if error > (self.phase_max_error + self.noise_tolerance):
             self.phase_max_error = error
             updated_max_min = True
-        if error < self.phase_min_error:
+        if error < (self.phase_min_error - self.noise_tolerance):
             self.phase_min_error = error
             updated_max_min = True
 
