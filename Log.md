@@ -24,6 +24,15 @@ Implemented project plan feedback
 Handed in project plan
 Refined tuner evaluation
     Added Skogestad's IMC to tuner evaluation
+    Started python simulation
+Made python simulation modular (like target system)
+
+# Week 4
+Store measured system dynamics in file for faster manual tuning
+Add tuning and evaluation plotting
+Created simulation experiment runner for automation
+Store generated plots per experiment
+Improve performance of simulation
 
 # ?
     - How long is the measurement time / time constant?
