@@ -16,7 +16,7 @@ class Main:
     sim_mass = 40.0             # Mass of simulated object (kg)
     sim_specific_heat = 500.0   # Specific heat capacity (J/(kg*K))
 
-    selected_tuner = AstromHagglund  # Tuning method
+    selected_tuner = Skogestad  # Tuning method
     # Each tuning method stores the measured system dynamics
     # Only the PID variables will be recalculated based on the stored dynamics
     load_from_config = False    # Use stored dynamics when True
@@ -28,7 +28,7 @@ class Main:
     min_output = 0              # Min heater output
 
     delay = 1.0                # Simulated delay / dead-time (s)
-    noise = 0.01                # Simulated temperature sensor noise
+    noise = 0.08                # Simulated temperature sensor noise
     
     experiment = -1
     experiment_set_id = -1
@@ -84,6 +84,9 @@ class Main:
         last_p = pid_config.kp
         last_i = pid_config.ki
         last_d = pid_config.kd
+        
+        cycle_count = 0
+        print_interval = int(1 / self.dt)
 
         # Selected tuner is None when we don't want to tune the system
         if self.selected_tuner == None:
@@ -93,6 +96,7 @@ class Main:
 
         try:
             while True:
+                cycle_count+=1
                 sim_time += self.dt # Add delta time to total time
 
                 # Potentially update PID variables with newly tuned variables
@@ -118,8 +122,10 @@ class Main:
                 sim.update(pid_output) # Update sim with new actuation
 
                 # sleep(self.dt) # Wait for delta time
-
-                print('Current Temp: ' + str(round(process_variable, 2)) + '°C | PID Output: ' + str(round(pid_output, 1)) + '%')
+                if cycle_count == print_interval:
+                    print('Current Temp: ' + str(round(process_variable, 2)) + '°C | PID Output: ' + str(round(pid_output, 1)) + '%')
+                    cycle_count = 0
+                
                 self.plot.add_temperature(process_variable, self.dt, pid_output, pid_config.setpoint) # Add data point to plot
         except KeyboardInterrupt:
             # Excepts when evaluation is done, or when user presses Ctrl+C
