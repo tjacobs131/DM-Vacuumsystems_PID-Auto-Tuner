@@ -3,7 +3,6 @@ import pid_config
 from abc import ABC, abstractmethod
 import sys
 import heat_simulation.heat_sim as hs
-from plotters.temp_controller_output_plot import Plotter
 from time import sleep
 from tuners.astrom_hagglund import AstromHagglund
 from tuners.skogestad import Skogestad
@@ -20,9 +19,11 @@ class EvaluateParallelPID(PID):
         self.initial_setpoint = 100
         self.setpoints = [
             self.initial_setpoint,            # Initial setpoint
-            self.initial_setpoint * 0.5,      # 50% of initial
-            self.initial_setpoint * 0.75      # 75% of initial
+            self.initial_setpoint * 0.25,      # 25% of initial
+            self.initial_setpoint * 0.50,       # Perform setpoint drag test at 50%
+            self.initial_setpoint * 1.25     # 125% of initial
         ]
+        self.drag_test_index = 2
         self.current_setpoint = self.initial_setpoint
         self.setpoint_index = 0
         self.ramp_rate = 100                  # ramp rate (per second)
@@ -95,7 +96,11 @@ class EvaluateParallelPID(PID):
                         
                         if self.setpoint_index < len(self.setpoints):
                             self.target_setpoint = self.setpoints[self.setpoint_index]
-                            print(f"Dwell complete, transitioning to {self.target_setpoint}°C (75%)")
+                            if self.setpoint_index == self.drag_test_index:
+                                self.ramp_rate = 0.1
+                            else:
+                                self.ramp_rate = 100
+                            print(f"Dwell complete, transitioning to {self.target_setpoint}°C")
                         else:
                             self.phase = 'final_stabilization'
                             print(f"All setpoints tested, finalizing at {self.current_setpoint}°C")

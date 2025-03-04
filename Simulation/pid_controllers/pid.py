@@ -13,11 +13,15 @@ class PID(ABC):
     def calculate_output(self, process_variable, setpoint, dt):
         pass
         
-    def check_stability(self, current_value: float, dt: float, threshold: float, duration: float = 5.0) -> bool:
+    def check_stability(self, current_value: float, initial_value, dt: float, threshold: float, duration: float = 5.0) -> bool:
         stable_samples_required = int(duration / dt)
-        
         # Update stability buffer
         self.stable_buffer.append(current_value)
+        
+        # Prevent from reaching stabilization before the value moves
+        if abs(initial_value - current_value) <= threshold * 2:
+            self.stable_buffer = []
+        
         if len(self.stable_buffer) > stable_samples_required:
             self.stable_buffer.pop(0)
         

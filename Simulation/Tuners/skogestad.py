@@ -16,7 +16,7 @@ class Skogestad(Tuner):
     time_data = []
     output_data = []
 
-    stable_threshold = 0.3  # allowed variation
+    stable_threshold = 0.2  # allowed variation
 
     dead_time = None
     rise_time = None  # estimated process time constant
@@ -44,11 +44,10 @@ class Skogestad(Tuner):
         self.time_data.append(dt)
         self.output_data.append(process_variable)
         if self.final_cooldown:
-            if abs(self.cooldown_start_temp - process_variable) <= self.stable_threshold * 2:
-                self.stable_buffer = []
-            if self.check_stability(process_variable, dt, self.stable_threshold, 45):
+            
+            if self.check_stability(process_variable, self.cooldown_start_temp, dt, self.stable_threshold, 15):
                 # SIMC formulas for a PI(D) controller:
-                k1 = 3.0
+                k1 = 1000.0
                 self.lambda_param = max(self.dead_time, dt)
                 Kp = self.rise_time / (self.k * (self.lambda_param + self.dead_time))
                 Ti = min(self.rise_time, k1 * (self.lambda_param + self.dead_time))
@@ -60,7 +59,7 @@ class Skogestad(Tuner):
             return 0
 
         if not self.reached_baseline:
-            if self.check_stability(process_variable, dt, self.stable_threshold, 45):
+            if self.check_stability(process_variable, self.initial_process_variable, dt, self.stable_threshold, 15):
                 self.current_output = self.initial_output + self.step_amplitude
                 self.stable_buffer = []
                 self.baseline = process_variable
@@ -70,7 +69,7 @@ class Skogestad(Tuner):
         else:
             self.step_time += dt
             
-            if self.check_stability(process_variable, dt, self.stable_threshold, 45):
+            if self.check_stability(process_variable, self.baseline, dt, self.stable_threshold, 15):
                 final_output = self.get_stabilized_output()
                 self.stable_buffer = []
                 self.k = (final_output - self.baseline) / self.step_amplitude

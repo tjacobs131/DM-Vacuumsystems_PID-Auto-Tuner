@@ -45,7 +45,7 @@ class AstromHagglund(Parallel_PID):
 
         # Final flag (once testing is done or config loaded)
         self.final_cooldown = False
-        self.stable_threshold = 0.5
+        self.stable_threshold = 0.3
 
         # If a config is available, skip system testing.
         if load_from_config and os.path.exists("tuner_config.ini"):
@@ -59,9 +59,7 @@ class AstromHagglund(Parallel_PID):
     def calculate_output(self, process_variable: float, setpoint: float, dt: float) -> float:
         # If in final cooldown, just output the minimum value and wait to stabilize
         if self.final_cooldown:
-            if abs(self.cooldown_start_temp - process_variable) <= self.stable_threshold * 2:
-                self.stable_buffer = []
-            if self.check_stability(process_variable, dt, self.stable_threshold, 5):
+            if self.check_stability(process_variable, self.cooldown_start_temp, dt, self.stable_threshold, 5):
                 
                 pid_config.kp = 0.6 * self.ku
                 pid_config.ki = 0.5 * self.tu
