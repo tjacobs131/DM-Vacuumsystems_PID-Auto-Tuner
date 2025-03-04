@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import pid_config
 from pid_controllers.pid import PID
-import numpy as np
 
 class Plotter:
     def __init__(self,
@@ -35,10 +34,11 @@ class Plotter:
         self.setpoint.append(setpoint)
         
     def plot(self, done_tuning_time: float):
-        if done_tuning_time == -1:
+        self.tuning_time = done_tuning_time
+        if self.tuning_time == -1:
             self._plot_single()
         else:
-            self._plot_tuning_and_evaluation(done_tuning_time)
+            self._plot_tuning_and_evaluation()
     
     def _plot_single(self):
         # Use all data in one plot
@@ -50,7 +50,7 @@ class Plotter:
         
         # Primary y-axis for temperature
         ax1.plot(self.dt, self.temperature, linestyle='-', color='blue', label="Temperature (°C)")
-        ax1.plot(self.dt, self.setpoint, color='blue', linestyle='-', alpha=0.2, label="Setpoint")
+        ax1.plot(self.dt, self.setpoint, color='blue', linestyle='-', alpha=0.3, linewidth=1.8, label="Setpoint")
         ax1.set_xlabel("Time (s)")
         ax1.set_ylabel("Temperature (°C)", color='blue')
         ax1.tick_params(axis='y', labelcolor='blue')
@@ -60,7 +60,7 @@ class Plotter:
         
         # Secondary y-axis for controller output
         ax2 = ax1.twinx()
-        ax2.plot(self.dt, self.controller_output, linestyle='--', color='orange', label="Controller Output (%)")
+        ax2.plot(self.dt, self.controller_output, linestyle='--', color='orange', linewidth=1.1, label="Controller Output (%)")
         ax2.set_ylabel("Controller Output (%)", color='orange')
         ax2.tick_params(axis='y', labelcolor='orange')
         
@@ -72,16 +72,15 @@ class Plotter:
         lines2, labels2 = ax2.get_legend_handles_labels()
         ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right', bbox_to_anchor=(1.05, 1.15))
         
-        
-        plt.figtext(0.005, 0.82, self.__def_generate_info_text(), fontsize=10,
+        plt.figtext(0.01, 0.82, self.__def_generate_info_text(), fontsize=8,
                     bbox=dict(facecolor='white', alpha=0.9, boxstyle='round,pad=0.4',
                               edgecolor='gray', linewidth=1))
         plt.subplots_adjust(top=0.8, left=0.1, right=0.9, bottom=0.1)
     
-    def _plot_tuning_and_evaluation(self, done_tuning_time: float):
+    def _plot_tuning_and_evaluation(self):
         # Split the data into two parts
-        tuning_indices = [i for i, t in enumerate(self.dt) if t <= done_tuning_time]
-        evaluation_indices = [i for i, t in enumerate(self.dt) if t > done_tuning_time]
+        tuning_indices = [i for i, t in enumerate(self.dt) if t <= self.tuning_time]
+        evaluation_indices = [i for i, t in enumerate(self.dt) if t > self.tuning_time]
         
         # Create new time arrays relative to the start of each section
         dt_tuning = [self.dt[i] for i in tuning_indices]
@@ -112,7 +111,7 @@ class Plotter:
         
         fig, ax1 = plt.subplots(figsize=(12, 8))
         ax1.plot(dt_section, temp_section, linestyle='-', color='blue', label="Temperature (°C)")
-        ax1.plot(dt_section, setpoint_section, color='blue', linestyle='-', alpha=0.2, label="Setpoint")
+        ax1.plot(dt_section, setpoint_section, color='blue', linestyle='-', alpha=0.3, linewidth=1.8, label="Setpoint")
         ax1.set_xlabel("Time (s)")
         ax1.set_ylabel("Temperature (°C)", color='blue')
         ax1.tick_params(axis='y', labelcolor='blue')
@@ -121,7 +120,7 @@ class Plotter:
         ax1.grid(True, which='minor', linestyle=':', linewidth=0.5, alpha=0.4)
         
         ax2 = ax1.twinx()
-        ax2.plot(dt_section, ctrl_section, linestyle='--', color='orange', label="Controller Output (%)")
+        ax2.plot(dt_section, ctrl_section, linestyle='--', color='orange', linewidth=1.1, label="Controller Output (%)")
         ax2.set_ylabel("Controller Output (%)", color='orange')
         ax2.tick_params(axis='y', labelcolor='orange')
         
@@ -132,14 +131,14 @@ class Plotter:
         lines2, labels2 = ax2.get_legend_handles_labels()
         ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right', bbox_to_anchor=(1.05, 1.15))
         
-        
-        plt.figtext(0.005, 0.82, self.__def_generate_info_text(), fontsize=10,
+        plt.figtext(0.01, 0.82, self.__def_generate_info_text(), fontsize=8,
                     bbox=dict(facecolor='white', alpha=0.9, boxstyle='round,pad=0.4',
                               edgecolor='gray', linewidth=1))
         plt.subplots_adjust(top=0.8, left=0.1, right=0.9, bottom=0.1)
         
     def __def_generate_info_text(self):
         info_text = (
+            f"Tuning Time + Cooldown: {round(self.tuning_time, 1)}s\n\n"
             f"PID Parameters:\n"
             f"Kp = {self.kp:.4f}, Ki = {self.ki:.4f}, Kd = {self.kd:.4f}\n\n"
             f"Simulated Object:\n"

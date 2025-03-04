@@ -45,7 +45,8 @@ class AstromHagglund(Parallel_PID):
 
         # Final flag (once testing is done or config loaded)
         self.final_cooldown = False
-        self.stable_threshold = 0.3
+        self.stable_threshold = 0.2
+        self.oscillation_threshold = 0.05
 
         # If a config is available, skip system testing.
         if load_from_config and os.path.exists("tuner_config.ini"):
@@ -59,7 +60,7 @@ class AstromHagglund(Parallel_PID):
     def calculate_output(self, process_variable: float, setpoint: float, dt: float) -> float:
         # If in final cooldown, just output the minimum value and wait to stabilize
         if self.final_cooldown:
-            if self.check_stability(process_variable, self.cooldown_start_temp, dt, self.stable_threshold, 5):
+            if self.check_stability(process_variable, self.cooldown_start_temp, dt, self.stable_threshold, 30):
                 
                 pid_config.kp = 0.6 * self.ku
                 pid_config.ki = 0.5 * self.tu
@@ -86,12 +87,12 @@ class AstromHagglund(Parallel_PID):
         self.timer += dt
 
         # Switch between heating and cooling modes.
-        if self.heating and process_variable > setpoint:
+        if self.heating and process_variable > setpoint + self.oscillation_threshold:
             self.heating = False
             self.time1 = self.timer
             self.thigh = self.time1 - self.time2
             self.max_recorded_output = setpoint
-        elif not self.heating and process_variable < setpoint:
+        elif not self.heating and process_variable < setpoint - self.oscillation_threshold:
             self.heating = True
             self.time2 = self.timer
             self.tlow = self.time2 - self.time1
@@ -101,19 +102,7 @@ class AstromHagglund(Parallel_PID):
                 if self.iterations >= self.iterations_to_skip:
                     self.kuAvg += (4 * self.max_controller_output - self.min_controller_output) / (math.pi * amplitude_pv)
                     self.tuAvg += self.thigh + self.tlow
-                    
 
-                # self.kp = 0.6 * self.ku
-                # self.ki = 0.5 * self.tu
-                # self.kd = 0.125 * self.tu
-
-                # if self.iterations >= self.iterations_to_skip:
-                #     self.pAvg += self.kp
-                #     self.iAvg += self.ki
-                #     self.dAvg += self.kd
-                    
-                       
-                
                 self.min_recorded_output = setpoint
 
                 self.iterations += 1
