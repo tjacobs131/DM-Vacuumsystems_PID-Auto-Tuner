@@ -8,17 +8,19 @@ import pid_config
 from tuners.astrom_hagglund import AstromHagglund
 from tuners.skogestad import Skogestad
 from tuners.tuner import Tuner
+import argparse
+import uuid
 
 class Main:
-    dt = 0.02                   # Delta time (s) 
+    dt = 0.02                   # Delta time (s)
     sim_mass = 40.0             # Mass of simulated object (kg)
     sim_specific_heat = 500.0   # Specific heat capacity (J/(kg*K))
-    
+
     selected_tuner = AstromHagglund  # Tuning method
     # Each tuning method stores the measured system dynamics
     # Only the PID variables will be recalculated based on the stored dynamics
     load_from_config = False    # Use stored dynamics when True
-    
+
     selected_pid = EvaluateParallelPID # Selected PID controller
 
     setpoint = 100              # Target temperature
@@ -26,9 +28,39 @@ class Main:
     min_output = 0              # Min heater output
 
     delay = 1.0                # Simulated delay / dead-time (s)
-    noise = 0.00                # Simulated temperature sensor noise
+    noise = 0.01                # Simulated temperature sensor noise
     
+    experiment = -1
+    experiment_set_id = -1
+
     def __init__(self):
+        parser = argparse.ArgumentParser(description='Heat Simulation with PID Control')
+        parser.add_argument('--tuner', type=str, default=None, help="Which tuner to use", choices=['astromhagglund', 'skogestad'])
+        parser.add_argument('--dt', type=float, default=self.dt, help='Delta time (s)')
+        parser.add_argument('--sim_mass', type=float, default=self.sim_mass, help='Mass of simulated object (kg)')
+        parser.add_argument('--sim_specific_heat', type=float, default=self.sim_specific_heat, help='Specific heat capacity (J/(kg*K))')
+        parser.add_argument('--setpoint', type=float, default=self.setpoint, help='Target temperature (°C)')
+        parser.add_argument('--delay', type=float, default=self.delay, help='Simulated delay / dead-time (s)')
+        parser.add_argument('--noise', type=float, default=self.noise, help='Simulated temperature sensor noise')
+        parser.add_argument('--experiment', type=int, default=-1, help='Number to identify different experiments')
+        parser.add_argument('--experiment_set_id', type=uuid.UUID, default=-1, help='Unique id to identify sets of experiments')
+
+        args = parser.parse_args()
+        
+        if args.tuner == 'astromhagglund':
+            self.selected_tuner = AstromHagglund
+        elif args.tuner == 'skogestad':
+            self.selected_tuner = Skogestad
+
+        self.dt = args.dt
+        self.sim_mass = args.sim_mass
+        self.sim_specific_heat = args.sim_specific_heat
+        self.setpoint = args.setpoint
+        self.delay = args.delay
+        self.noise = args.noise
+        self.experiment = args.experiment
+        self.experiment_set_id = args.experiment_set_id
+
         self.plot = Plotter(
             chosen_tuner=self.selected_tuner,
             dt=self.dt,
@@ -36,21 +68,23 @@ class Main:
             specific_heat=self.sim_specific_heat,
             simulated_delay=self.delay,
             simulated_noise=self.noise,
+            experiment_set_id=self.experiment_set_id,
+            experiment=self.experiment
         )
 
-        pid_config.setpoint = 100 # Used to update the setpoint from different modules for plotting
+        pid_config.setpoint = self.setpoint # Used to update the setpoint from different modules for plotting
 
     def main(self):
         sim = hs.HeatSim(self.dt, mass=self.sim_mass, specific_heat=self.sim_specific_heat, delay=self.delay, noise=self.noise)
         sim_time = 0                # Cumulative delta time (s)
         tuning_done_time = -1.0     # Time it took to tune the system (-1 if no tuning occured)
-        
+
         # PID variables from config file
         # The config file lets modules sync their PID settings between each other
         last_p = pid_config.kp
         last_i = pid_config.ki
         last_d = pid_config.kd
-        
+
         # Selected tuner is None when we don't want to tune the system
         if self.selected_tuner == None:
             pid = self.selected_pid(self.max_output, self.min_output, kp, ki, kd)
@@ -60,7 +94,7 @@ class Main:
         try:
             while True:
                 sim_time += self.dt # Add delta time to total time
-                
+
                 # Potentially update PID variables with newly tuned variables
                 kp = pid_config.kp
                 ki = pid_config.ki
@@ -75,7 +109,7 @@ class Main:
                     last_i = ki
                     last_d = kd
                     print('PID config changed - Kp: ' + str(pid_config.kp) + ' | Ki: ' + str(pid_config.ki) + ' | Kd: ' + str(pid_config.kd))
-                    
+
                     if not self.load_from_config:               # Only if we are measuring the system dynamics
                         tuning_done_time = sim_time - self.dt   # Remove one dt otherwise we get one datapoint from the eval phase in the tune plot
 
@@ -90,8 +124,11 @@ class Main:
         except KeyboardInterrupt:
             # Excepts when evaluation is done, or when user presses Ctrl+C
             self.plot.plot(tuning_done_time)
-            self.plot.show()
+            if self.experiment == -1: 
+                self.plot.show()
+                
             sys.exit(0)
 
 if __name__ == "__main__":
-    Main.main(Main())
+    main_instance = Main()
+    main_instance.main()

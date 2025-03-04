@@ -43,3 +43,6 @@ coverage.xml
 .ropeproject
 
 *.ini
+.ini
+
+experiment**.png
