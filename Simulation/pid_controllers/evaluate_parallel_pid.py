@@ -38,9 +38,10 @@ class EvaluateParallelPID(PID):
         # Variables for oscillation detection
         self.error_history = []             # Recent error values
         self.history_time = []              # Timestamps for the errors
-        self.oscillation_threshold = 15     # Number of sign changes considered oscillatory
-        self.history_duration = 10          # Time window in seconds for oscillation detection
-        self.minimum_oscillation_amplitude = self.stable_threshold # Minimum oscillation amplitude to terminate
+        self.minimum_oscillation_amplitude = 0.1
+        self.oscillation_threshold = 8      # How many oscillations before triggering (4 full cycles)
+        self.history_duration = 60          # Increased from 10 seconds
+        self.min_cycles_for_oscillation = 2  # Minimum number of complete cycles
         self.last_error_sign = 0            # Track the sign of the previous error for change detection
 
     def check_stability(self, process_variable, dt, threshold, duration):
@@ -54,52 +55,46 @@ class EvaluateParallelPID(PID):
         return False
 
     def detect_oscillation(self, error, current_time):
-        """Track error history and detect oscillations based on peak-to-peak amplitude and directional changes."""
-        self.error_history.append(error)
-        self.history_time.append(current_time)
-
-        # Remove entries older than the specified duration
-        while self.history_time and (current_time - self.history_time[0] > self.history_duration):
+        """Oscillation detection for both high and low frequency oscillations"""
+        self.error_history.append((current_time, error))
+        
+        # Purge old entries
+        while self.error_history and (current_time - self.error_history[0][0] > self.history_duration):
             self.error_history.pop(0)
-            self.history_time.pop(0)
 
-        if len(self.error_history) < 2:  # Need at least two points to detect peaks
+        if len(self.error_history) < 2:
             return
 
-        # Calculate peak-to-peak amplitude of raw errors
-        max_error = max(self.error_history)
-        min_error = min(self.error_history)
-        peak_to_peak_amplitude = max_error - min_error
+        # Calculate amplitude and sign changes
+        errors = [e for (t, e) in self.error_history]
+        max_error = max(errors)
+        min_error = min(errors)
+        amplitude = max_error - min_error
 
         # Calculate sign changes with deadband
-        deadband = self.stable_threshold
         sign_changes = 0
-        for i in range(1, len(self.error_history)):
-            prev = self.error_history[i-1]
-            current = self.error_history[i]
+        prev_sign = 0
+        deadband = self.stable_threshold
 
-            # Apply deadband to determine effective signs
-            prev_sign = 0
-            if prev > deadband:
-                prev_sign = 1
-            elif prev < -deadband:
-                prev_sign = -1
-
+        for t, e in self.error_history:
             current_sign = 0
-            if current > deadband:
+            if e > deadband:
                 current_sign = 1
-            elif current < -deadband:
+            elif e < -deadband:
                 current_sign = -1
-
-            # Count only transitions between positive and negative regions
+            
             if prev_sign != 0 and current_sign != 0 and prev_sign != current_sign:
                 sign_changes += 1
+            prev_sign = current_sign if current_sign != 0 else prev_sign
 
-        # Check oscillation criteria
-        if (sign_changes >= self.oscillation_threshold and 
-            peak_to_peak_amplitude >= self.minimum_oscillation_amplitude):
-            print(f"Oscillations detected (Amplitude: {peak_to_peak_amplitude:.2f}°C, "
-                  f"Sign Changes: {sign_changes}/{self.oscillation_threshold}). Terminating evaluation.")
+        # Calculate number of complete cycles
+        full_cycles = sign_changes // 2
+
+        # Check oscillation conditions
+        if (amplitude >= self.minimum_oscillation_amplitude and 
+            full_cycles >= self.min_cycles_for_oscillation):
+            print(f"Oscillation detected: {full_cycles} cycles in {self.history_duration}s "
+                f"(Amplitude: {amplitude:.2f}°C)")
             raise KeyboardInterrupt
 
     def calculate_output(self, process_variable, setpoint, dt):
