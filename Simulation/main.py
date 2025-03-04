@@ -27,8 +27,8 @@ class Main:
     max_output = 100            # Max heater output
     min_output = 0              # Min heater output
 
-    delay = 1.0                # Simulated delay / dead-time (s)
-    noise = 0.08                # Simulated temperature sensor noise
+    delay = 30.0                # Simulated delay / dead-time (s)
+    noise = 0.00                # Simulated temperature sensor noise
     
     experiment = -1
     experiment_set_id = -1

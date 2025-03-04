@@ -42,7 +42,7 @@ class EvaluateParallelPID(PID):
         self.phase_min_error = float('inf')
         self.last_max_min_update_time = 0
         self.minimum_oscillation_amplitude = 0.5
-        self.noise_tolerance = 0.05  # Tolerance for noise in error signal
+        self.noise_tolerance = 0.162  # Tolerance for noise in error signal
 
 
     def reset_oscillation_detection(self, current_time):
@@ -74,7 +74,7 @@ class EvaluateParallelPID(PID):
             self.last_max_min_update_time = current_time
 
         time_since_last_change = current_time - self.last_max_min_update_time
-        if time_since_last_change > self.stable_duration:
+        if time_since_last_change > 0.2:
             amplitude = self.phase_max_error - self.phase_min_error
             if amplitude > self.minimum_oscillation_amplitude:
                 print(f"Oscillation detected: Max error: {self.phase_max_error:.2f}, Min error: {self.phase_min_error:.2f}, Amplitude: {amplitude:.2f} "
