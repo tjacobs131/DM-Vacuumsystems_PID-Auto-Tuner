@@ -50,7 +50,7 @@ class AstromHagglund(Parallel_PID):
 
         # If a config is available, skip system testing.
         if load_from_config and os.path.exists("tuner_config.ini"):
-            conf = Tuner.load_tuner_config("astromhagglund", self.get_config_names())
+            conf = Tuner.load_tuner_config("astrom_hagglund", self.get_config_names())
             if conf:
                 self.load_config(conf)
                 self.heating = False
@@ -60,12 +60,12 @@ class AstromHagglund(Parallel_PID):
     def calculate_output(self, process_variable: float, setpoint: float, dt: float) -> float:
         # If in final cooldown, just output the minimum value and wait to stabilize
         if self.final_cooldown:
-            if self.check_stability(process_variable, self.cooldown_start_temp, dt, self.stable_threshold, 30):
+            if self.check_stability(process_variable, dt, self.stable_threshold, self.cooldown_start_temp, 30):
                 
                 pid_config.kp = 0.6 * self.ku
                 pid_config.ki = 0.5 * self.tu
                 pid_config.kd = 0.125 * self.tu
-                Tuner.store_tuner_config("astromhagglund", self.get_config())
+                Tuner.store_tuner_config("astrom_hagglund", self.get_config())
             return self.min_controller_output
 
         # Check if all iterations have been completed.
