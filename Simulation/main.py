@@ -12,11 +12,11 @@ import argparse
 import uuid
 
 class Main:
-    dt = 0.02                   # Delta time (s)
+    dt = 0.8                   # Delta time (s)
     sim_mass = 40.0             # Mass of simulated object (kg)
     sim_specific_heat = 500.0   # Specific heat capacity (J/(kg*K))
 
-    selected_tuner = Skogestad  # Tuning method
+    selected_tuner = Skogestad  # Tuning method (None is no tuning)
     # Each tuning method stores the measured system dynamics
     # Only the PID variables will be recalculated based on the stored dynamics
     load_from_config = False    # Use stored dynamics when True
@@ -27,15 +27,15 @@ class Main:
     max_output = 100            # Max heater output
     min_output = 0              # Min heater output
 
-    delay = 30.0                # Simulated delay / dead-time (s)
-    noise = 0.00                # Simulated temperature sensor noise
+    delay = 4.0                # Simulated delay / dead-time (s)
+    noise = 0.0                # Simulated temperature sensor noise
     
     experiment = -1
     experiment_set_id = -1
 
     def __init__(self):
         parser = argparse.ArgumentParser(description='Heat Simulation with PID Control')
-        parser.add_argument('--tuner', type=str, default=None, help="Which tuner to use", choices=['astromhagglund', 'skogestad'])
+        parser.add_argument('--tuner', type=str, default=None, help="Which tuner to use", choices=['astrom_hagglund', 'skogestad'])
         parser.add_argument('--dt', type=float, default=self.dt, help='Delta time (s)')
         parser.add_argument('--sim_mass', type=float, default=self.sim_mass, help='Mass of simulated object (kg)')
         parser.add_argument('--sim_specific_heat', type=float, default=self.sim_specific_heat, help='Specific heat capacity (J/(kg*K))')
@@ -47,7 +47,7 @@ class Main:
 
         args = parser.parse_args()
         
-        if args.tuner == 'astromhagglund':
+        if args.tuner == 'astrom_hagglund':
             self.selected_tuner = AstromHagglund
         elif args.tuner == 'skogestad':
             self.selected_tuner = Skogestad
@@ -96,9 +96,6 @@ class Main:
 
         try:
             while True:
-                cycle_count+=1
-                sim_time += self.dt # Add delta time to total time
-
                 # Potentially update PID variables with newly tuned variables
                 kp = pid_config.kp
                 ki = pid_config.ki
@@ -127,6 +124,9 @@ class Main:
                     cycle_count = 0
                 
                 self.plot.add_temperature(process_variable, self.dt, pid_output, pid_config.setpoint) # Add data point to plot
+                
+                cycle_count+=1
+                sim_time += self.dt # Add delta time to total time
         except KeyboardInterrupt:
             # Excepts when evaluation is done, or when user presses Ctrl+C
             self.plot.plot(tuning_done_time)
