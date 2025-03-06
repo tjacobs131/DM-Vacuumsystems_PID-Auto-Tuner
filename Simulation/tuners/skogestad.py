@@ -15,7 +15,7 @@ class Skogestad(Tuner):
     time_data = []
     output_data = []
 
-    stable_threshold = 1.0
+    stable_threshold = 0.7
 
     dead_time = None
     rise_time = None
@@ -56,7 +56,7 @@ class Skogestad(Tuner):
             return 0
 
         if not self.reached_baseline:
-            if self.check_stability(process_variable, dt, self.stable_threshold, self.initial_process_variable, 30):
+            if self.check_stability(process_variable, dt, self.stable_threshold, self.initial_process_variable, 15):
                 self.current_output = self.initial_output + self.step_amplitude
                 self.baseline = process_variable
                 self.reached_baseline = True
@@ -64,7 +64,7 @@ class Skogestad(Tuner):
             return self.current_output
         else:
             self.step_time += dt
-            if self.check_stability(process_variable,dt, self.stable_threshold, self.baseline, 30):
+            if self.check_stability(process_variable,dt, self.stable_threshold, self.baseline, 15):
                 final_output = self.get_stabilized_output()
                 self.k = (final_output - self.baseline) / self.step_amplitude
                 self.dead_time = 0
@@ -73,7 +73,7 @@ class Skogestad(Tuner):
                     if y < lowest_y:
                         lowest_y = y
                     self.dead_time += self.time_data[i]
-                    if y >= lowest_y + 0.0001 * (final_output - lowest_y):
+                    if y >= lowest_y + 0.008 * (final_output - lowest_y):
                         self.dead_time -= dt
                         break
 

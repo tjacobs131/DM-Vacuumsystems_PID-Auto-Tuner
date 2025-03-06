@@ -35,8 +35,8 @@ class EvaluateParallelPID(PID):
         self.slow_ramp_rate = 0.1
 
         self.phase = 'initial_stabilization'
-        self.stable_threshold = 0.4
-        self.stable_duration = 5.0
+        self.stable_threshold = 0.7
+        self.stable_duration = 15.0
         self.dwell_time = 10.0
         self.stable_time = 0
         self.dwell_counter = 0
@@ -62,6 +62,7 @@ class EvaluateParallelPID(PID):
         # Time tracking
         self.last_time = time()
         self.total_time = 0
+        self.max_run_time = 6000
 
     def _update_time(self):
         current_time = hs.current_time() if hasattr(hs, 'current_time') else time()
@@ -81,7 +82,7 @@ class EvaluateParallelPID(PID):
     
     def _detect_oscillation(self):
         # Failsafe
-        if self.total_time > 3000:
+        if self.total_time > self.max_run_time:
             print("Failsafe: Ran too long.")
             raise KeyboardInterrupt()
         
@@ -156,6 +157,7 @@ class EvaluateParallelPID(PID):
         if not self.is_dwelling:
             if self._check_stability(process_variable, dt):
                 print(f"Stabilized at {self.current_setpoint}°C, dwelling for {self.dwell_time} seconds")
+                self.max_run_time *= 2
                 self.is_dwelling = True
                 self.reset_oscillation_detection()
         else:
@@ -217,7 +219,10 @@ class EvaluateParallelPID(PID):
 
         if dt is None:
             dt = self._update_time()
-        if dt <= 0 or dt > 1:
+        # Clamp dt to a maximum of 1 second
+        dt = min(dt, 1)
+
+        if dt <= 0:
             return 0
 
         self.total_time += dt

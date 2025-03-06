@@ -2,9 +2,9 @@ import numpy as np
 from collections import deque
 
 class HeatSim:
-    # Physical constants (adjust values to match your system)
+    # Physical constants
     MASS = 0.0                # kg (mass of the heater)
-    SPECIFIC_HEAT = 0.0      # J/(kg·K) (e.g., water: ~4200, metal: ~500)
+    SPECIFIC_HEAT = 0.0      # J/(kg·K)
     HEAT_TRANSFER_COEFF = 180.0 # W/K (heat loss to environment)
     ROOM_TEMP = 20.0           # °C
 

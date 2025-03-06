@@ -21,14 +21,18 @@ class PID(ABC):
         pass
 
     def check_stability(self, current_value: float, dt: float, threshold: float, initial_value=None, duration: float = 5.0) -> bool:
+        base_dt = 0.05
         if initial_value != self.last_initial_value:
             self.last_initial_value = initial_value
             self.stable_buffer = []
         
-        stable_samples_required = int(duration / dt)
+        # Calculate required samples with an aggressive scaling factor.
+        scaling = dt / base_dt
+        stable_samples_required = int((duration / dt) * scaling)
+        
         self.stable_buffer.append(current_value)
         
-        if initial_value is not None and abs(initial_value - current_value) <= threshold * 2:
+        if initial_value is not None and abs(initial_value - current_value) <= 5.0:
             self.stable_buffer = []
         
         if len(self.stable_buffer) > stable_samples_required:
@@ -36,6 +40,9 @@ class PID(ABC):
         
         is_stable = (len(self.stable_buffer) == stable_samples_required and
                     (max(self.stable_buffer) - min(self.stable_buffer) < threshold))
+        
+        if is_stable:
+            pass
         return is_stable
 
     def get_stabilized_output(self) -> float:
