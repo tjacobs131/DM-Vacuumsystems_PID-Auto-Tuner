@@ -15,7 +15,7 @@ class Skogestad(Tuner):
     time_data = []
     output_data = []
 
-    stable_threshold = 0.5
+    stable_threshold = 1.0
 
     dead_time = None
     rise_time = None
@@ -33,8 +33,8 @@ class Skogestad(Tuner):
                 self.final_cooldown = True
                 self.cooldown_start_temp = 9999
         else:
-            self.time_data = [0]
-            self.output_data = [0]
+            self.time_data = []
+            self.output_data = []
 
     def calculate_output(self, process_variable: float, setpoint: float, dt: float) -> float:
         if self.initial_process_variable is None:
@@ -43,7 +43,7 @@ class Skogestad(Tuner):
         self.output_data.append(process_variable)
 
         if self.final_cooldown:
-            if self.check_stability(process_variable, self.cooldown_start_temp, dt, self.stable_threshold, 30):
+            if self.check_stability(process_variable, dt, self.stable_threshold, self.cooldown_start_temp, 30):
                 k1 = 1.3
                 self.lambda_param = max(self.dead_time, dt)
                 Kp = self.rise_time / (self.k * (self.lambda_param + self.dead_time))
@@ -51,12 +51,12 @@ class Skogestad(Tuner):
                 Ti = k1 * (self.lambda_param + self.dead_time)
                 pid_config.kp = Kp
                 pid_config.ki = Kp / Ti
-                pid_config.kd = dt
+                pid_config.kd = 0
                 Tuner.store_tuner_config("skogestad", self.get_config())
             return 0
 
         if not self.reached_baseline:
-            if self.check_stability(process_variable, self.initial_process_variable, dt, self.stable_threshold, 30):
+            if self.check_stability(process_variable, dt, self.stable_threshold, self.initial_process_variable, 30):
                 self.current_output = self.initial_output + self.step_amplitude
                 self.baseline = process_variable
                 self.reached_baseline = True
@@ -64,13 +64,17 @@ class Skogestad(Tuner):
             return self.current_output
         else:
             self.step_time += dt
-            if self.check_stability(process_variable, self.baseline, dt, self.stable_threshold, 30):
+            if self.check_stability(process_variable,dt, self.stable_threshold, self.baseline, 30):
                 final_output = self.get_stabilized_output()
                 self.k = (final_output - self.baseline) / self.step_amplitude
                 self.dead_time = 0
+                lowest_y = float("inf")
                 for i, y in enumerate(self.output_data):
+                    if y < lowest_y:
+                        lowest_y = y
                     self.dead_time += self.time_data[i]
-                    if y >= self.initial_process_variable + 0.002 * (final_output - self.initial_process_variable):
+                    if y >= lowest_y + 0.0001 * (final_output - lowest_y):
+                        self.dead_time -= dt
                         break
 
                 target = self.baseline + 0.632 * (final_output - self.baseline)
