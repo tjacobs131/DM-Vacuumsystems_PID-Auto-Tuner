@@ -67,8 +67,9 @@ class Plotter:
         ax1.tick_params(axis='y', labelcolor='blue')
         ax1.minorticks_on()
         ax1.grid(True, which='major', linestyle='-', linewidth=0.8, alpha=1.0)
-        ax1.grid(True, which='minor', linestyle=':', linewidth=0.5, alpha=1.0)
-        ax1.xaxis.set_minor_locator(ticker.AutoMinorLocator(10))
+        ax1.grid(True, which='minor', linestyle='-', linewidth=0.5, alpha=1.0)
+        ax1.xaxis.set_major_locator(ticker.LinearLocator())
+        ax1.xaxis.set_minor_locator(ticker.AutoMinorLocator(2))
 
         # Secondary y-axis for controller output
         ax2 = ax1.twinx()
@@ -170,7 +171,7 @@ class Plotter:
                 os.makedirs(experiment_set_folder, exist_ok=True)
 
             # Save the file in the chosen folder
-            file_name = f"experiment_{self.experiment}_{title.split(' ')[0]}({ s.sds }).png"
+            file_name = f"experiment_{self.experiment}_{title.split(' ')[0]}({ self.chosen_tuner }).png"
             full_path = os.path.join(experiment_set_folder, file_name)
             plt.savefig(full_path, dpi=200)
         else:
@@ -191,8 +192,7 @@ class Plotter:
     def _generate_info_text(self):
         info_text = (
             f"Tuning Time: {round(self.tuning_time, 1)}s\n"
-            f"Evaluation Time: {round(self.evaluation_time, 1)}s\n"
-            f"PID Parameters:\n"
+            f"Evaluation Time: {round(self.evaluation_time, 1)}s\n\n"
             f"Simulated Object:\n"
             f"Mass: {self.mass}kg, Heat Capacity: {self.specific_heat}J/(kg·K)\n\n"
             f"Simulation Parameters:\n"
@@ -204,7 +204,7 @@ class Plotter:
         system_dynamics=Tuner.to_string(self.chosen_tuner)
         return (
             f"Found System Dynamics:\n{system_dynamics}\n\n"
-            f"Calculated PID variables: \nKp = {self.kp:.4f} \nKi = {self.ki:.4f} \nKd = {self.kd:.4f}\n"
+            f"Calculated PID variables: \nKp = {self.kp:.4f} \nKi = {self.ki:.4f} \nKd = {self.kd:.4f}"
         )
 
     def show(self):
