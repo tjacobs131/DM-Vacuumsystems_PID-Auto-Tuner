@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL" Id="{55000c09-fd3e-4ef2-bc8e-0182699637fa}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	iTempSensor: REAL := 0.0;	// Temperature (°C)
+	bHeaterActuator: INT := 0;	// Heater power (0-100%)
+	
+	kp: REAL := 0;
+	ki: REAL := 0;
+	kd: REAL := 0;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

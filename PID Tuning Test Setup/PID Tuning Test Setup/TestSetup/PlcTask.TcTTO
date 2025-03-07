@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Task Name="PlcTask" Id="{6d0dd86e-11f4-45d5-ba29-aca93cc84e6f}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>10000</CycleTime>
+    <Priority>20</Priority>
+    <PouCall>
+      <Name>MAIN</Name>
+    </PouCall>
+    <PouCall>
+      <Name>ConvertIO</Name>
+    </PouCall>
+    <TaskFBGuid>{242540ee-4f65-4b49-bb32-ffbcd98aa4c1}</TaskFBGuid>
+    <Fb_init>{881d43df-8825-4353-979d-6146ab012bb2}</Fb_init>
+    <Fb_exit>{e7686918-d385-4b5c-957a-513baca42311}</Fb_exit>
+    <CycleUpdate>{dda44ab5-9730-433e-8e84-c6a14aaf3c44}</CycleUpdate>
+    <PostCycleUpdate>{acbbafac-4b55-4d99-93a3-05409ea4c882}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>
