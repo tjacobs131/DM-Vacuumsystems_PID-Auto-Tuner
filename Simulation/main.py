@@ -12,7 +12,7 @@ import argparse
 import uuid
 
 class Main:
-    dt = 0.8                   # Delta time (s)
+    dt = 0.05                   # Delta time (s)
     sim_mass = 40.0             # Mass of simulated object (kg)
     sim_specific_heat = 500.0   # Specific heat capacity (J/(kg*K))
 
@@ -27,8 +27,8 @@ class Main:
     max_output = 100            # Max heater output
     min_output = 0              # Min heater output
 
-    delay = 4.0                # Simulated delay / dead-time (s)
-    noise = 0.0                # Simulated temperature sensor noise
+    delay = 30.0                # Simulated delay / dead-time (s)
+    noise = 0.00                # Simulated temperature sensor noise
     
     experiment = -1
     experiment_set_id = -1
