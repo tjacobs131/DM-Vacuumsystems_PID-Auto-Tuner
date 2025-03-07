@@ -77,7 +77,7 @@ class Plotter:
         ax2.set_ylabel("Controller Output (%)", color='orange')
         ax2.tick_params(axis='y', labelcolor='orange')
 
-        plt.title(f"PID Performance with Tuning Method: {self.chosen_tuner}",
+        plt.title(f"Evaluation Phase Data\nPID Tuner: {self.chosen_tuner}",
                   fontsize=14, fontweight='bold', pad=20)
 
         # Legend
