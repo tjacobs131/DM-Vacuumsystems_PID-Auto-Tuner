@@ -12,8 +12,8 @@ Collected information about tuners regarding this use case
 Finished Ziegler-Nichols tuner implementation on simulation
     Refactored simulation code (following D&M conventions)
 Collected information about tuners
-    Physics makes big difference, needs special tuning
-Created HMI for heater simulation
+Physics makes big difference, needs special tuning
+Created basic HMI for heater simulation
 Added possible tuners
     Started writing tuning methods evaluation
 Understand IFT tuning gradient descent method
@@ -32,7 +32,11 @@ Store measured system dynamics in file for faster manual tuning
 Add tuning and evaluation plotting
 Created simulation experiment runner for automation
 Store generated plots per experiment
-Improve performance of simulation
+Improved performance of simulation
+    Collected simulation results
+    Wrote discussion on simulation results
+Added use cases to report
+    Started implementing on test-setup
 
 # ?
     - How long is the measurement time / time constant?

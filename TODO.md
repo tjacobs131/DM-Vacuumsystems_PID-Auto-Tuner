@@ -11,6 +11,7 @@ Measure controller output for setpoint
 Calculate appropriate step / relay test setpoint and amplitude
 Measure system dynamics
 Store system dynamics
+System recommends possible parameter values
 User enters optional parameter
     Recalculate PID variables
 System test
