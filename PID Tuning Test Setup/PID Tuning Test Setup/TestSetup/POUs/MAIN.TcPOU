@@ -3,10 +3,36 @@
   <POU Name="MAIN" Id="{a76c3da7-8f6e-458f-9e74-7b7fc4cfb652}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM MAIN
 VAR
+	previousTime: ULINT := 0;
+	currentTime: ULINT := 0;
+	
+	loTime: UDINT := 0;
+	hiTime: UDINT := 0;
+	getTime: GETSYSTEMTIME;
+	
+	deltaTime: REAL := 0.0;
+	
+	skogestadPID: Skogestad;
+	parallelPID: ParallelPID;
+
+	
+	lastPID: REAL := GVL.ki + GVL.ki + GVL.kd;
+	useSkogestad: BOOL := TRUE;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[GVL.bHeaterActuator := 10;]]></ST>
+      <ST><![CDATA[getTime(timeLoDW => loTime, timeHiDW => hiTime);
+currentTime := UDINT_TO_ULINT(SHL(hiTime, 31) + loTime); 
+IF (previousTime = 0) THEN
+	previousTime := currentTime;
+ELSE 
+	deltaTime := ULINT_TO_REAL(currentTime - previousTime) / 10000000;
+	previousTime := currentTime;
+END_IF
+
+IF NOT (deltaTime = 0.0) THEN
+	pid(rFeedbackVariable := GVL.rTempSensor, rSetpoint := GVL.rSetpoint, rDeltaTime := deltaTime, iOutput => GVL.iHeaterActuator); 
+END_IF]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

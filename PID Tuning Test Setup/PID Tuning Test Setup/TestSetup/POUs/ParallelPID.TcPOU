@@ -1,14 +1,42 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
-  <POU Name="ParallelPID" Id="{c6bece98-9eca-4ec6-acee-eba02304d025}" SpecialFunc="None">
-    <Declaration><![CDATA[PROGRAM ParallelPID
+  <POU Name="ParallelPID" Id="{eca183d0-bf57-493f-b038-2b9b6890780b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK ParallelPID
+VAR_INPUT
+	rFeedbackVariable: REAL := 0.0; // The measured temperature (°C)
+	rSetpoint: REAL := 0.0; 		// The target temperature (°C)
+	rDeltaTime: REAL := 0.0;		// The cycle's run time (S)
+END_VAR
+VAR_OUTPUT
+	iOutput: INT := 0; 				// The controller output (0% - 100%)
+END_VAR
 VAR
-	prevError: REAL := 0;
-	prevIntegral: REAL := 0;
+	MAX_OUTPUT: INT := 100;			// Highest possible controller output (%)
+	MIN_OUTPUT: INT := 0;			// Lowest possible controller output (%)
+	
+	error: REAL := 0.0;				// Current error
+	prevError: REAL := 0.0;			// Last calculated error
+	
+	integral: REAL := 0.0;			// Previous iteration's integral
+	rollbackIntegral: REAL := 0.0;	// This iterations integral for rollback
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[]]></ST>
+      <ST><![CDATA[error := rSetpoint - rFeedbackVariable;
+prevError := error;
+
+rollbackIntegral := integral;
+integral := integral + error + rDeltaTime;
+
+iOutput := REAL_TO_INT((GVL.kp * error) + (GVL.ki * integral) + (GVL.kd * (error - prevError) / rDeltaTime));
+
+IF iOutput > MAX_OUTPUT THEN
+	iOutput := MAX_OUTPUT;
+	integral := rollbackIntegral;
+ELSIF iOutput < MIN_OUTPUT THEN
+	iOutput := MIN_OUTPUT;
+	integral := rollbackIntegral;
+END_IF]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

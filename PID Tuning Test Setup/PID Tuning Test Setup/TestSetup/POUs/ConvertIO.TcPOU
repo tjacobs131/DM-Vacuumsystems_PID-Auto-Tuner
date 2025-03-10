@@ -8,8 +8,8 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[GVL.iTempSensor := INT_TO_REAL(iTemperatureSensor) / 10;
-byHeaterActuator := REAL_TO_BYTE((INT_TO_REAL(GVL.bHeaterActuator) / 100) * 256);]]></ST>
+      <ST><![CDATA[GVL.rTempSensor := INT_TO_REAL(iTemperatureSensor) / 10;
+byHeaterActuator := INT_TO_BYTE((GVL.iHeaterActuator * 255) / 100);]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>
