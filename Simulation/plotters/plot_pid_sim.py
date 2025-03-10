@@ -57,7 +57,7 @@ class Plotter:
         self.ki = pid_config.ki
         self.kd = pid_config.kd
 
-        fig, ax1 = plt.subplots(figsize=(12, 8))
+        fig, ax1 = plt.subplots(figsize=(14, 8))
 
         # Primary y-axis for temperature
         ax1.plot(self.dt, self.temperature, linestyle='-', color='blue', label="Temperature (°C)")
@@ -125,7 +125,7 @@ class Plotter:
         self.ki = pid_config.ki
         self.kd = pid_config.kd
 
-        fig, ax1 = plt.subplots(figsize=(12, 8))
+        fig, ax1 = plt.subplots(figsize=(14, 8))
         ax1.plot(dt_section, temp_section, linestyle='-', color='blue', label="Temperature (°C)")
         ax1.plot(dt_section, setpoint_section, color='blue', linestyle='-', alpha=0.3, linewidth=1.8, label="Setpoint")
         ax1.set_xlabel("Time (s)")
@@ -180,12 +180,12 @@ class Plotter:
     def _add_info_texts(self, fig):
         """Adds multiple info text boxes to the figure."""
         info_text1 = self._generate_info_text()
-        plt.figtext(0.01, 0.82, info_text1, fontsize=8,
+        plt.figtext(0.01, 0.82, info_text1, fontsize=10,
                     bbox=dict(facecolor='white', alpha=0.9, boxstyle='round,pad=0.4',
                               edgecolor='gray', linewidth=1))
 
         info_text2 = self._generate_second_info_text()  # Create this method
-        plt.figtext(0.23, 0.82, info_text2, fontsize=8,  # Lower y-coordinate
+        plt.figtext(0.27, 0.82, info_text2, fontsize=10,  # Lower y-coordinate
                     bbox=dict(facecolor='white', alpha=0.9, boxstyle='round,pad=0.4',
                               edgecolor='gray', linewidth=1))
 
@@ -203,8 +203,8 @@ class Plotter:
     def _generate_second_info_text(self):
         system_dynamics=Tuner.to_string(self.chosen_tuner)
         return (
-            f"Found System Dynamics:\n{system_dynamics}\n\n"
-            f"Calculated PID variables: \nKp = {self.kp:.4f} \nKi = {self.ki:.4f} \nKd = {self.kd:.4f}"
+            f"System Dynamics:\n{system_dynamics}\n\n"
+            f"PID variables: \nKp = {self.kp:.4f} \nKi = {self.ki:.4f} \nKd = {self.kd:.4f}"
         )
 
     def show(self):

@@ -35,8 +35,8 @@ class EvaluateParallelPID(PID):
         self.slow_ramp_rate = 0.1
 
         self.phase = 'initial_stabilization'
-        self.stable_threshold = 0.7
-        self.stable_duration = 15.0
+        self.stable_threshold = 0.6
+        self.stable_duration = 30.0
         self.dwell_time = 10.0
         self.stable_time = 0
         self.dwell_counter = 0
@@ -62,7 +62,7 @@ class EvaluateParallelPID(PID):
         # Time tracking
         self.last_time = time()
         self.total_time = 0
-        self.max_run_time = 6000
+        self.max_run_time = 2000
 
     def _update_time(self):
         current_time = hs.current_time() if hasattr(hs, 'current_time') else time()

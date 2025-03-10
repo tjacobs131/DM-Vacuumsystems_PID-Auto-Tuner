@@ -45,8 +45,8 @@ class AstromHagglund(Parallel_PID):
 
         # Final flag (once testing is done or config loaded)
         self.final_cooldown = False
-        self.stable_threshold = 0.6
-        self.oscillation_threshold = 0.05
+        self.stable_threshold = 0.8
+        self.oscillation_threshold = 0.2
 
         # If a config is available, skip system testing.
         if load_from_config and os.path.exists("tuner_config.ini"):

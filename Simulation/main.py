@@ -14,12 +14,12 @@ import uuid
 class Main:
     dt = 0.05                   # Delta time (s)
     sim_mass = 40.0             # Mass of simulated object (kg)
-    sim_specific_heat = 500.0   # Specific heat capacity (J/(kg*K))
+    sim_specific_heat = 400.0   # Specific heat capacity (J/(kg*K))
 
     selected_tuner = Skogestad  # Tuning method (None is no tuning)
     # Each tuning method stores the measured system dynamics
     # Only the PID variables will be recalculated based on the stored dynamics
-    load_from_config = False    # Use stored dynamics when True
+    load_from_config = True    # Use stored dynamics when True
 
     selected_pid = EvaluateParallelPID # Selected PID controller
 
@@ -28,7 +28,7 @@ class Main:
     min_output = 0              # Min heater output
 
     delay = 30.0                # Simulated delay / dead-time (s)
-    noise = 0.00                # Simulated temperature sensor noise
+    noise = 0.05                # Simulated temperature sensor noise
     
     experiment = -1
     experiment_set_id = -1

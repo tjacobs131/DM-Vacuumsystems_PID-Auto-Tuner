@@ -15,7 +15,7 @@ class Skogestad(Tuner):
     time_data = []
     output_data = []
 
-    stable_threshold = 0.2
+    stable_threshold = 0.3
 
     dead_time = None
     rise_time = None
@@ -44,7 +44,7 @@ class Skogestad(Tuner):
 
         if self.final_cooldown:
             if self.check_stability(process_variable, dt, self.stable_threshold, self.cooldown_start_temp, 30):
-                k1 = 3.0
+                k1 = 0.5
                 self.lambda_param = max(self.dead_time, dt)
                 Kp = self.rise_time / (self.k * (self.lambda_param + self.dead_time))
                 Ti = min(self.rise_time, k1 * (self.lambda_param + self.dead_time))
@@ -73,7 +73,7 @@ class Skogestad(Tuner):
                     if y < lowest_y:
                         lowest_y = y
                     self.dead_time += self.time_data[i]
-                    if y >= lowest_y + 0.002 * (final_output - lowest_y):
+                    if y >= lowest_y + 0.005 * (final_output - lowest_y):
                         self.dead_time -= dt
                         break
 
