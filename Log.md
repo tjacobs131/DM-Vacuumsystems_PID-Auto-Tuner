@@ -36,7 +36,11 @@ Improved performance of simulation
     Collected simulation results
     Wrote discussion on simulation results
 Added use cases to report
-    Started implementing on test-setup
+    Started binding IO on test-setup PLC
+
+# Week 5
+Implement parallel PID on test-setup
+Start working on Skogestad tuner
 
 # ?
     - How long is the measurement time / time constant?
