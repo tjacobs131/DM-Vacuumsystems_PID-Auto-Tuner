@@ -16,22 +16,52 @@ VAR
 	parallelPID: ParallelPID;
 
 	
-	lastPID: REAL := GVL.ki + GVL.ki + GVL.kd;
+	lastPID: REAL := 0;
 	useSkogestad: BOOL := TRUE;
+	
+	init: BOOL := TRUE;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[getTime(timeLoDW => loTime, timeHiDW => hiTime);
-currentTime := UDINT_TO_ULINT(SHL(hiTime, 31) + loTime); 
-IF (previousTime = 0) THEN
-	previousTime := currentTime;
-ELSE 
-	deltaTime := ULINT_TO_REAL(currentTime - previousTime) / 10000000;
-	previousTime := currentTime;
+      <ST><![CDATA[IF init THEN
+	lastPID := GVL.kp + GVL.ki + GVL.kd;
 END_IF
 
+// Update the useSkogestad flag based if the tuner has changed PID
+IF NOT (lastPID = GVL.kp + GVL.ki + GVL.kd) THEN
+    useSkogestad := FALSE;
+END_IF
+
+// Get the current system time
+getTime(timeLoDW => loTime, 
+		timeHiDW => hiTime);
+currentTime := UDINT_TO_ULINT(SHL(hiTime, 31) + loTime);
+
+// Calculate deltaTime
+IF (previousTime = 0) THEN
+    previousTime := currentTime;
+ELSE
+    deltaTime := ULINT_TO_REAL(currentTime - previousTime) / 10000000;
+    previousTime := currentTime;
+END_IF
+
+// Execute the appropriate PID controller
 IF NOT (deltaTime = 0.0) THEN
-	pid(rFeedbackVariable := GVL.rTempSensor, rSetpoint := GVL.rSetpoint, rDeltaTime := deltaTime, iOutput => GVL.iHeaterActuator); 
+    IF useSkogestad THEN
+        skogestadPID(
+            rFeedbackVariable := GVL.rTempSensor,
+            rSetpoint := GVL.rSetpoint,
+            rDeltaTime := deltaTime,
+            iOutput => GVL.iHeaterActuator
+        );
+    ELSE
+        parallelPID(
+            rFeedbackVariable := GVL.rTempSensor,
+            rSetpoint := GVL.rSetpoint,
+            rDeltaTime := deltaTime,
+            iOutput => GVL.iHeaterActuator
+        );
+    END_IF
 END_IF]]></ST>
     </Implementation>
   </POU>

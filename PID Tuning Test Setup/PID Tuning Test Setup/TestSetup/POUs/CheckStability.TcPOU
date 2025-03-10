@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="CheckStability" Id="{8ba214d9-a090-40ae-8db6-37810979b87f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK CheckStability
+VAR_INPUT
+    rCurrentValue : REAL;     // New measurement to add
+    rDeltaTime    : REAL;     // Cycle time (dt)
+    rThreshold    : REAL;     // Allowed range for stability
+    rDuration     : REAL;     // Desired stability duration (seconds)
+    rInitialValue : REAL;     // Initial value (to detect resets)
+END_VAR
+VAR_OUTPUT
+    bIsStable         : BOOL;   // TRUE if the buffer is stable
+    rStabilizedOutput : REAL;   // Average of the last 20% of samples
+END_VAR
+VAR
+    base_dt                 : REAL := 0.05;
+    scaling                 : REAL;
+    stable_samples_required : INT;
+    i                       : INT;
+    rMax                    : REAL;
+    rMin                    : REAL;
+    sum                     : REAL;
+    num_to_average          : INT;
+    lastInitial             : REAL := -99.9; // remembers previous initial value
+    currentIndex            : INT := 0;     // current count of samples in buffer
+    stableBuffer            : ARRAY[0..1000] OF REAL; // fixed‐size buffer (simulate queue)
+	emptyBuffer				: ARRAY[0..1000] OF REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+// TODO: Make sure we moved from init val.
+
+
+stable_samples_required := REAL_TO_INT(rDuration / rDeltaTime);
+
+// If the initial value has changed, reset the buffer.
+IF rInitialValue <> lastInitial THEN
+    lastInitial := rInitialValue;
+    currentIndex := 0;
+	stableBuffer := emptyBuffer;
+END_IF
+
+IF ABS(rInitialValue - rCurrentValue) <= 5.0 THEN
+    currentIndex := 0;
+END_IF
+
+// Append new value as FIFO:
+IF currentIndex < stable_samples_required THEN
+    stableBuffer[currentIndex] := rCurrentValue;
+    currentIndex := currentIndex + 1;
+ELSE
+    // Shift buffer left by one.
+    FOR i := 0 TO stable_samples_required - 2 DO
+        stableBuffer[i] := stableBuffer[i + 1];
+    END_FOR
+    stableBuffer[stable_samples_required - 1] := rCurrentValue;
+END_IF
+
+// Check stability only if the buffer is full.
+IF currentIndex = stable_samples_required THEN
+    rMax := stableBuffer[0];
+    rMin := stableBuffer[0];
+    FOR i := 1 TO stable_samples_required - 1 DO
+        IF stableBuffer[i] > rMax THEN
+            rMax := stableBuffer[i];
+        END_IF
+        IF stableBuffer[i] < rMin THEN
+            rMin := stableBuffer[i];
+        END_IF
+    END_FOR
+    bIsStable := ((rMax - rMin) < rThreshold);
+ELSE
+    bIsStable := FALSE;
+END_IF
+
+// Compute the stabilized output (average of last 20% of the samples)
+IF currentIndex > 0 THEN
+    num_to_average := REAL_TO_INT(0.2 * currentIndex);
+    IF num_to_average < 1 THEN
+        num_to_average := 1;
+    END_IF
+    sum := 0.0;
+    FOR i := currentIndex - num_to_average TO currentIndex - 1 DO
+        sum := sum + stableBuffer[i];
+    END_FOR
+    rStabilizedOutput := sum / num_to_average;
+ELSE
+    rStabilizedOutput := 0.0;
+END_IF
+
+IF bIsStable THEN
+	stableBuffer := emptyBuffer;
+	currentIndex := 0;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -24,6 +24,9 @@
     <Compile Include="PlcTask.TcTTO">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\CheckStability.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\ConvertIO.TcPOU">
       <SubType>Code</SubType>
     </Compile>

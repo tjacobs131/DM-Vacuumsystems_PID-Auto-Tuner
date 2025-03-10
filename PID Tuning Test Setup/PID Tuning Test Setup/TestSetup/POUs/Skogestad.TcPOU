@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="Skogestad" Id="{aa431b1a-4355-4557-bb11-a5f63cc0b804}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Skogestad EXTENDS ParallelPID
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	rStableWaitTime: REAL := 10;
+	checkStability: CheckStability;
+	stabilized: BOOL := FALSE;
+	currentIndex: INT := 0;
+	stableOutput: REAL := 0;
+	
+	reachedBaseline: BOOL := FALSE;
+	
+	baselineOutput: INT := 0;
+	stepOutput: INT := 50;
+	currentOutput: INT := 0;
+	
+	stepTime: REAL := 0;
+END_VAR
+
+
+	]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[checkStability(rCurrentValue := rFeedbackVariable, 
+				rDeltaTime := rDeltaTime, 
+				rThreshold := 0.1, 
+				rDuration := rStableWaitTime,
+				rInitialValue := -99.9, 
+				bIsStable => stabilized, 
+				rStabilizedOutput => stableOutput);
+
+IF NOT reachedBaseline THEN
+	currentOutput := baselineOutput;
+	IF stabilized THEN
+		currentOutput := stepOutput;
+		reachedBaseline := TRUE;
+	END_IF
+ELSE
+	stepTime := stepTime + rDeltaTime;
+END_IF
+
+iOutput := currentOutput;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
