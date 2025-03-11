@@ -1,9 +1,12 @@
-Write recommendation for tuner choice
 Write recommendation for OOP implementation
-
 Class diagram for simulation and OOP implementation
-Comparison of methods in simulation under different conditions
-Measure data in plotted graph
+
+# Test setup
+Plot data
+Implement noise measurement
+Measure optimal controller output based on setpoint
+Store measured system dynamics
+Allow user to change tc during operation
 
 # Final system
 Measure baseline noise

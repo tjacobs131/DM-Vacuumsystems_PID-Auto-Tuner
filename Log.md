@@ -41,6 +41,8 @@ Added use cases to report
 # Week 5
 Implement parallel PID on test-setup
 Start working on Skogestad tuner
+Implemented stability detection
+Implemented Skogestad tuner
 
 # ?
     - How long is the measurement time / time constant?
