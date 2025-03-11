@@ -4,9 +4,9 @@
     <Declaration><![CDATA[FUNCTION_BLOCK CheckStability
 VAR_INPUT
     rCurrentValue : REAL;     // New measurement to add
-    rDeltaTime    : REAL;     // Cycle time (dt)
+    rDeltaTime    : REAL;     // Cycle time (dt) in seconds
     rThreshold    : REAL;     // Allowed range for stability
-    rDuration     : REAL;     // Desired stability duration (seconds)
+    rDuration     : REAL;     // Desired stability duration, max 60 (seconds)
     rInitialValue : REAL;     // Initial value (to detect resets)
 END_VAR
 VAR_OUTPUT
@@ -14,8 +14,6 @@ VAR_OUTPUT
     rStabilizedOutput : REAL;   // Average of the last 20% of samples
 END_VAR
 VAR
-    base_dt                 : REAL := 0.05;
-    scaling                 : REAL;
     stable_samples_required : INT;
     i                       : INT;
     rMax                    : REAL;
@@ -24,41 +22,54 @@ VAR
     num_to_average          : INT;
     lastInitial             : REAL := -99.9; // remembers previous initial value
     currentIndex            : INT := 0;     // current count of samples in buffer
-    stableBuffer            : ARRAY[0..1000] OF REAL; // fixed‐size buffer (simulate queue)
-	emptyBuffer				: ARRAY[0..1000] OF REAL;
-END_VAR
-]]></Declaration>
+    stableBuffer            : ARRAY[0..6000] OF REAL; // fixed‐size buffer (simulate FIFO)
+    emptyBuffer             : ARRAY[0..6000] OF REAL; // for resetting the buffer
+	rStableCounter : REAL := 0.0; // Accumulated stable time
+	
+	init: BOOL := TRUE;
+END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[
-// TODO: Make sure we moved from init val.
+      <ST><![CDATA[IF init THEN
+	init := FALSE;
+	// Calculate how many samples are needed to span the desired duration.
+	stable_samples_required := REAL_TO_INT(rDuration / rDeltaTime);
+END_IF
 
-
-stable_samples_required := REAL_TO_INT(rDuration / rDeltaTime);
+// When overall stability is achieved, reset the buffer AND counter:
+IF bIsStable THEN
+     stableBuffer := emptyBuffer;
+     currentIndex := 0;
+     rStableCounter := 0.0;
+END_IF
 
 // If the initial value has changed, reset the buffer.
 IF rInitialValue <> lastInitial THEN
     lastInitial := rInitialValue;
     currentIndex := 0;
-	stableBuffer := emptyBuffer;
+    stableBuffer := emptyBuffer;
+	rStableCounter := 0;
 END_IF
 
-IF ABS(rInitialValue - rCurrentValue) <= 5.0 THEN
+IF ABS(rInitialValue - rCurrentValue) < 1.0 THEN
+    // If deviation is too low, reset the buffer.
     currentIndex := 0;
+    stableBuffer := emptyBuffer;
+	rStableCounter := 0;
 END_IF
 
-// Append new value as FIFO:
+// Append new value using FIFO logic:
 IF currentIndex < stable_samples_required THEN
     stableBuffer[currentIndex] := rCurrentValue;
     currentIndex := currentIndex + 1;
 ELSE
-    // Shift buffer left by one.
+    // Shift buffer left by one element.
     FOR i := 0 TO stable_samples_required - 2 DO
         stableBuffer[i] := stableBuffer[i + 1];
     END_FOR
     stableBuffer[stable_samples_required - 1] := rCurrentValue;
 END_IF
 
-// Check stability only if the buffer is full.
+// Only check stability if the buffer is full.
 IF currentIndex = stable_samples_required THEN
     rMax := stableBuffer[0];
     rMin := stableBuffer[0];
@@ -70,12 +81,12 @@ IF currentIndex = stable_samples_required THEN
             rMin := stableBuffer[i];
         END_IF
     END_FOR
-    bIsStable := ((rMax - rMin) < rThreshold);
+    bIsStable := ((rMax - rMin) < rThreshold + 0.01);
 ELSE
     bIsStable := FALSE;
 END_IF
 
-// Compute the stabilized output (average of last 20% of the samples)
+// Compute the stabilized output as the average of the last 20% of samples.
 IF currentIndex > 0 THEN
     num_to_average := REAL_TO_INT(0.2 * currentIndex);
     IF num_to_average < 1 THEN
@@ -90,9 +101,18 @@ ELSE
     rStabilizedOutput := 0.0;
 END_IF
 
+// Now update the timer:
 IF bIsStable THEN
-	stableBuffer := emptyBuffer;
-	currentIndex := 0;
+    rStableCounter := rStableCounter + rDeltaTime;
+ELSE
+    rStableCounter := 0.0;
+END_IF
+
+// Only keep overall stability true if stable condition has been met for at least half of rDuration:
+IF rStableCounter >= (rDuration / 2.0) THEN
+    bIsStable := TRUE;
+ELSE
+    bIsStable := FALSE;
 END_IF]]></ST>
     </Implementation>
   </POU>

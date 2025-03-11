@@ -6,8 +6,8 @@ VAR
 	previousTime: ULINT := 0;
 	currentTime: ULINT := 0;
 	
-	loTime: UDINT := 0;
-	hiTime: UDINT := 0;
+	loTime: ULINT := 0;
+	hiTime: ULINT := 0;
 	getTime: GETSYSTEMTIME;
 	
 	deltaTime: REAL := 0.0;
@@ -25,6 +25,7 @@ END_VAR
     <Implementation>
       <ST><![CDATA[IF init THEN
 	lastPID := GVL.kp + GVL.ki + GVL.kd;
+	init := FALSE;
 END_IF
 
 // Update the useSkogestad flag based if the tuner has changed PID
@@ -35,7 +36,7 @@ END_IF
 // Get the current system time
 getTime(timeLoDW => loTime, 
 		timeHiDW => hiTime);
-currentTime := UDINT_TO_ULINT(SHL(hiTime, 31) + loTime);
+currentTime := SHL(hiTime, 32) + loTime;
 
 // Calculate deltaTime
 IF (previousTime = 0) THEN

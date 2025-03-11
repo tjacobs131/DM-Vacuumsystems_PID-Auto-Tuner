@@ -23,17 +23,17 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[error := rSetpoint - rFeedbackVariable;
-prevError := error;
-
 rollbackIntegral := integral;
-integral := integral + error + rDeltaTime;
+integral := integral + error * rDeltaTime;
 
 iOutput := REAL_TO_INT((GVL.kp * error) + (GVL.ki * integral) + (GVL.kd * (error - prevError) / rDeltaTime));
 
-IF iOutput > MAX_OUTPUT THEN
+prevError := error;
+
+IF iOutput >= MAX_OUTPUT THEN
 	iOutput := MAX_OUTPUT;
 	integral := rollbackIntegral;
-ELSIF iOutput < MIN_OUTPUT THEN
+ELSIF iOutput <= MIN_OUTPUT THEN
 	iOutput := MIN_OUTPUT;
 	integral := rollbackIntegral;
 END_IF]]></ST>

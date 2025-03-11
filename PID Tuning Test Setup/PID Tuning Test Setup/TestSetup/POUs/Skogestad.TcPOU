@@ -7,41 +7,175 @@ END_VAR
 VAR_OUTPUT
 END_VAR
 VAR
-	rStableWaitTime: REAL := 10;
+	k1: REAL := 3.0;
+	lambda: REAL := 0.0;	
+
+	// Measured system dynamics	
+	baselineTemp: REAL := 0.0;
+	stepTemp: REAL := 0.0;
+	stepTime: REAL := 0;
+	riseTime: REAL := 0;
+	k: REAL := 0.0;
+	deadTime: REAL := 0.0;
+
+	rStableWaitTime: REAL := 20;
 	checkStability: CheckStability;
 	stabilized: BOOL := FALSE;
-	currentIndex: INT := 0;
-	stableOutput: REAL := 0;
+	stableTemp: REAL := 0;
 	
 	reachedBaseline: BOOL := FALSE;
 	
-	baselineOutput: INT := 0;
-	stepOutput: INT := 50;
+	baselineOutput: INT := 1;
+	stepOutput: INT := 3;
 	currentOutput: INT := 0;
 	
-	stepTime: REAL := 0;
+	arraySize: INT := 10000;
+	arTemp: ARRAY[0..10000] OF REAL;
+	arTime: ARRAY[0..10000] OF REAL;
+	currentIndex: INT := 0;
+	i: INT := 0;
+	cyclesToSkip: INT := 0;
+	currentCycle: INT := 0;
+	skippedDeltaTime: REAL := 0.0;
+	
+	lowestTemp: REAL := 9999;
+	
+	baselineTime: REAL := 0;
+	
+	measureTemp: REAL := 0;
+	
+	initTemp: REAL := 0.0;
+	
+	init: BOOL := TRUE;
+	done: BOOL := FALSE;
 END_VAR
 
 
 	]]></Declaration>
     <Implementation>
-      <ST><![CDATA[checkStability(rCurrentValue := rFeedbackVariable, 
+      <ST><![CDATA[IF init THEN
+	// Wait for temperature to stabilize before starting the tuner
+	// This makes sure we have dropped below the baseline temperature
+	checkStability(rCurrentValue := rFeedbackVariable, 
+				rDeltaTime := rDeltaTime, 
+				rThreshold := 0.5, 
+				rDuration := 15,
+				rInitialValue := -99.9, 
+				bIsStable => stabilized, 
+				rStabilizedOutput => stableTemp);
+				
+	IF stabilized THEN
+		// Data arrays fill too quickly, so we only fill every few cycles
+		cyclesToSkip := REAL_TO_INT(arraySize * rDeltaTime);
+
+		currentOutput := baselineOutput; // Set controller output to reach baseline
+		initTemp := stableTemp; // Store starting temperature
+		init := FALSE; // Init only once
+		stabilized := FALSE; // Reset stabilized
+	ELSE
+		RETURN;
+	END_IF
+END_IF
+
+// Calculate PID
+// This should when tuning is complete, or when tc (k1) was changed without retuning				
+IF done THEN
+	// Default tc (k1) behavior
+	// High tc results in more conservative response
+	// Lower tc for more aggressive control
+	// k1 := riseTime / deadTime;
+	
+	k1 := riseTime / deadTime * 0.666;
+	
+	lambda := MAX(deadTime, rDeltaTime);
+	GVL.kp := riseTime / (k * (lambda + deadTime));
+	GVL.ki := GVL.kp / MIN(riseTime, k1 * (lambda + deadTime));
+	GVL.kd := 0;
+	
+	RETURN;
+END_IF
+
+// Stabilization check
+IF NOT stabilized THEN // Only run if we have confirmed stabilization (reset stabilized)
+	checkStability(rCurrentValue := rFeedbackVariable, 
 				rDeltaTime := rDeltaTime, 
 				rThreshold := 0.1, 
 				rDuration := rStableWaitTime,
-				rInitialValue := -99.9, 
+				rInitialValue := initTemp,
 				bIsStable => stabilized, 
-				rStabilizedOutput => stableOutput);
+				rStabilizedOutput => stableTemp);
+END_IF
 
-IF NOT reachedBaseline THEN
-	currentOutput := baselineOutput;
+// Skip some portion of cycles
+// This prevents data arrays from filling too quick
+IF currentCycle < cyclesToSkip THEN
+	currentCycle := currentCycle + 1;
+	skippedDeltaTime := skippedDeltaTime + rDeltaTime;
+	RETURN; // Skip cycle
+ELSE
+	currentCycle := 0;
+END_IF
+
+// Update data arrays				
+arTemp[currentIndex] := stableTemp;
+arTime[currentIndex] := skippedDeltaTime;
+currentIndex := currentIndex + 1;
+
+IF NOT reachedBaseline THEN // Rising to baseline
 	IF stabilized THEN
 		currentOutput := stepOutput;
+		baselineTemp := stableTemp;
 		reachedBaseline := TRUE;
+		
+		initTemp := stableTemp;
+		stabilized := FALSE;
 	END_IF
-ELSE
-	stepTime := stepTime + rDeltaTime;
+ELSE // Rising to baseline + step
+	IF stabilized THEN // Baseline + step reached
+		stepTemp := stableTemp; 
+		k := (stepTemp - baselineTemp) / (stepOutput - baselineOutput);
+		
+		// Reset deadTime and riseTime before calculation
+		deadTime := 0.0;
+		riseTime := 0.0;
+		lowestTemp := 9999; // Reset lowestTemp
+		
+		// Find dead-time
+		FOR i := 0 TO currentIndex - 1 DO // Use currentIndex - 1 to avoid overflow
+			IF arTemp[i] < lowestTemp THEN
+				lowestTemp := arTemp[i];
+			END_IF
+			IF arTemp[i] > lowestTemp + 0.002 * (stepTemp - lowestTemp) THEN
+				EXIT;
+			ELSE
+				deadTime := deadTime + arTime[i]; // Accumulate time until exit
+			END_IF
+		END_FOR
+		
+		// Find rise-time
+		measureTemp := baselineTemp + 0.632 * (stepTemp - baselineTemp);
+		baselineTime := 0.0; // Reset baselineTime
+		FOR i := 0 TO currentIndex - 1 DO
+			IF i MOD 100 = 0 THEN
+				i := i;
+			END_IF
+			riseTime := riseTime + arTime[i]; // Cumulative time up to sample i
+			IF arTemp[i] > baselineTemp THEN 
+				baselineTime := riseTime; // Time when baseline is crossed
+				baselineTemp := 3.402823E+38; // Prevent further updates
+			END_IF
+			IF arTemp[i] > measureTemp THEN
+				EXIT;
+			END_IF
+		END_FOR
+		riseTime := riseTime - baselineTime; // Subtract baseline crossing time
+		
+		currentOutput := 0; 
+		done := TRUE; // Immediately mark as done to prevent re-calculation
+	END_IF
 END_IF
+
+skippedDeltaTime := 0;
 
 iOutput := currentOutput;]]></ST>
     </Implementation>

@@ -8,8 +8,8 @@ VAR_GLOBAL
 	rSetpoint: REAL := 50.0;	// Target temperature (°C)
 	
 	
-	kp: REAL := 1.0;
-	ki: REAL := 0.01;
+	kp: REAL := 0.196;
+	ki: REAL := 171.99;
 	kd: REAL := 0;
 END_VAR]]></Declaration>
   </GVL>
