@@ -14,11 +14,16 @@ VAR
 	MAX_OUTPUT: INT := 100;			// Highest possible controller output (%)
 	MIN_OUTPUT: INT := 0;			// Lowest possible controller output (%)
 	
+	lastOutput: INT := 0;
+	
 	error: REAL := 0.0;				// Current error
 	prevError: REAL := 0.0;			// Last calculated error
 	
 	integral: REAL := 0.0;			// Previous iteration's integral
 	rollbackIntegral: REAL := 0.0;	// This iterations integral for rollback
+	
+	currentCycle: INT;
+	skippedDeltaTime: REAL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -26,7 +31,9 @@ END_VAR
 rollbackIntegral := integral;
 integral := integral + error * rDeltaTime;
 
-iOutput := REAL_TO_INT((GVL.kp * error) + (GVL.ki * integral) + (GVL.kd * (error - prevError) / rDeltaTime));
+iOutput := REAL_TO_INT(GVL.kp * error
+						+ GVL.ki * integral
+						+ GVL.kd * (error - prevError) / rDeltaTime);
 
 prevError := error;
 
@@ -36,7 +43,25 @@ IF iOutput >= MAX_OUTPUT THEN
 ELSIF iOutput <= MIN_OUTPUT THEN
 	iOutput := MIN_OUTPUT;
 	integral := rollbackIntegral;
-END_IF]]></ST>
+END_IF
+				
+lastOutput := iOutput;
+
+// Skip some portion of cycles
+// This prevents data arrays from filling too quick
+IF currentCycle < GVL.cyclesToSkip THEN
+	currentCycle := currentCycle + 1;
+	skippedDeltaTime := skippedDeltaTime + rDeltaTime;
+	RETURN; // Skip cycle
+ELSE
+	currentCycle := 0;
+END_IF
+
+GVL.arTempData[GVL.currentIndex] := rFeedbackVariable;
+GVL.arControllerData[GVL.currentIndex] := iOutput;
+GVL.arRealPowerData[GVL.currentIndex] := GVL.iRealPower;
+
+GVL.currentIndex := GVL.currentIndex + 1;]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

@@ -3,13 +3,16 @@
   <POU Name="ConvertIO" Id="{0580372f-3c7b-44c1-bbdf-2b88f1dab63c}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM ConvertIO
 VAR
+	wRealPower AT %I*: WORD := 0;
 	iTemperatureSensor AT %I*: INT := 0;
 	byHeaterActuator AT %Q*: BYTE := 0;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[GVL.rTempSensor := INT_TO_REAL(iTemperatureSensor) / 10;
-byHeaterActuator := INT_TO_BYTE((GVL.iHeaterActuator * 255) / 100);]]></ST>
+byHeaterActuator := REAL_TO_BYTE((GVL.iHeaterActuator * 50) / 100);
+
+GVL.iRealPower := WORD_TO_INT(wRealPower);]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

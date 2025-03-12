@@ -6,6 +6,11 @@ VAR_INPUT
 END_VAR
 VAR_OUTPUT
 END_VAR
+VAR PERSISTENT 
+	riseTime: REAL := 0;
+	k: REAL := 0;
+	deadTime: REAL := 0;
+END_VAR
 VAR
 	k1: REAL := 3.0;
 	lambda: REAL := 0.0;	
@@ -14,9 +19,6 @@ VAR
 	baselineTemp: REAL := 0.0;
 	stepTemp: REAL := 0.0;
 	stepTime: REAL := 0;
-	riseTime: REAL := 0;
-	k: REAL := 0.0;
-	deadTime: REAL := 0.0;
 
 	rStableWaitTime: REAL := 20;
 	checkStability: CheckStability;
@@ -25,8 +27,8 @@ VAR
 	
 	reachedBaseline: BOOL := FALSE;
 	
-	baselineOutput: INT := 1;
-	stepOutput: INT := 3;
+	baselineOutput: INT := 2;
+	stepOutput: INT := 5;
 	currentOutput: INT := 0;
 	
 	arraySize: INT := 10000;
@@ -34,9 +36,6 @@ VAR
 	arTime: ARRAY[0..10000] OF REAL;
 	currentIndex: INT := 0;
 	i: INT := 0;
-	cyclesToSkip: INT := 0;
-	currentCycle: INT := 0;
-	skippedDeltaTime: REAL := 0.0;
 	
 	lowestTemp: REAL := 9999;
 	
@@ -48,32 +47,37 @@ VAR
 	
 	init: BOOL := TRUE;
 	done: BOOL := FALSE;
+	loadConfig: BOOL := TRUE;
 END_VAR
 
 
 	]]></Declaration>
     <Implementation>
       <ST><![CDATA[IF init THEN
-	// Wait for temperature to stabilize before starting the tuner
-	// This makes sure we have dropped below the baseline temperature
-	checkStability(rCurrentValue := rFeedbackVariable, 
-				rDeltaTime := rDeltaTime, 
-				rThreshold := 0.5, 
-				rDuration := 15,
-				rInitialValue := -99.9, 
-				bIsStable => stabilized, 
-				rStabilizedOutput => stableTemp);
-				
-	IF stabilized THEN
-		// Data arrays fill too quickly, so we only fill every few cycles
-		cyclesToSkip := REAL_TO_INT(arraySize * rDeltaTime);
-
-		currentOutput := baselineOutput; // Set controller output to reach baseline
-		initTemp := stableTemp; // Store starting temperature
-		init := FALSE; // Init only once
-		stabilized := FALSE; // Reset stabilized
-	ELSE
-		RETURN;
+	IF loadConfig AND 
+		NOT (riseTime = 0 OR k = 0 OR deadTime = 0) THEN
+		done := TRUE;
+	END_IF
+	
+	IF NOT done THEN
+		// Wait for temperature to stabilize before starting the tuner
+		// This makes sure we have dropped below the baseline temperature
+		checkStability(rCurrentValue := rFeedbackVariable, 
+					rDeltaTime := rDeltaTime, 
+					rThreshold := 0.5, 
+					rDuration := 15,
+					rInitialValue := -99.9, 
+					bIsStable => stabilized, 
+					rStabilizedOutput => stableTemp);
+					
+		IF stabilized THEN
+			currentOutput := baselineOutput; // Set controller output to reach baseline
+			initTemp := stableTemp; // Store starting temperature
+			init := FALSE; // Finish init after stabiliziation
+			stabilized := FALSE; // Reset stabilized
+		ELSE
+			RETURN;
+		END_IF
 	END_IF
 END_IF
 
@@ -85,11 +89,12 @@ IF done THEN
 	// Lower tc for more aggressive control
 	// k1 := riseTime / deadTime;
 	
-	k1 := riseTime / deadTime * 0.666;
+	k1 := riseTime / (deadTime + deadTime);
 	
 	lambda := MAX(deadTime, rDeltaTime);
 	GVL.kp := riseTime / (k * (lambda + deadTime));
-	GVL.ki := GVL.kp / MIN(riseTime, k1 * (lambda + deadTime));
+	// GVL.ki := GVL.kp / MIN(riseTime, k1 * (lambda + deadTime));
+	GVL.ki := GVL.kp / (k1 * (lambda + deadTime));
 	GVL.kd := 0;
 	
 	RETURN;
@@ -108,7 +113,7 @@ END_IF
 
 // Skip some portion of cycles
 // This prevents data arrays from filling too quick
-IF currentCycle < cyclesToSkip THEN
+IF currentCycle < GVL.cyclesToSkip THEN
 	currentCycle := currentCycle + 1;
 	skippedDeltaTime := skippedDeltaTime + rDeltaTime;
 	RETURN; // Skip cycle
@@ -119,7 +124,12 @@ END_IF
 // Update data arrays				
 arTemp[currentIndex] := stableTemp;
 arTime[currentIndex] := skippedDeltaTime;
+
+GVL.arTempData[GVL.currentIndex] := stableTemp;
+GVL.arControllerData[GVL.currentIndex] := currentOutput;
+
 currentIndex := currentIndex + 1;
+GVL.currentIndex := GVL.currentIndex + 1;
 
 IF NOT reachedBaseline THEN // Rising to baseline
 	IF stabilized THEN
