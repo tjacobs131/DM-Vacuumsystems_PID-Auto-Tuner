@@ -5,43 +5,48 @@ import os
 
 class Skogestad(Tuner):
     final_cooldown = False
-    initial_output = 40
-    step_amplitude = 20
+    
+    # Controller outputs
+    initial_output = 40 # For baseline
+    step_amplitude = 20 # For step
 
     current_output = initial_output
+    
     baseline = None
     reached_baseline = False
 
     time_data = []
     output_data = []
 
-    stable_threshold = 0.3
+    stable_threshold = 0.3 # Temperature range within which it's considered stable
 
+    # System dynamics
     dead_time = None
     rise_time = None
+    
     lambda_param = None
     k = None
 
     initial_process_variable = None
 
     def __init__(self, load_from_config: bool):
-        self.load_from_config = load_from_config
         if load_from_config and os.path.exists("tuner_config.ini"):
             conf = Tuner.load_tuner_config("skogestad", self.get_config_names())
             if conf:
-                self.load_config(conf)
-                self.final_cooldown = True
-                self.cooldown_start_temp = 9999
-        else:
-            self.time_data = []
-            self.output_data = []
+                self.load_config(conf) # Load config values into corrosponding variables
+                self.final_cooldown = True # Tuning complete flag
+                self.cooldown_start_temp = 9999  # Move away from this temperature before counting as stabilized
 
     def calculate_output(self, process_variable: float, setpoint: float, dt: float) -> float:
         if self.initial_process_variable is None:
-            self.initial_process_variable = process_variable
+            self.initial_process_variable = process_variable # Set start temperature on first cycle
+        
+        # Collect data for measurement
         self.time_data.append(dt)
         self.output_data.append(process_variable)
 
+        # Cooldown after tuning is complete
+        # Prepares system for evaluation
         if self.final_cooldown:
             if self.check_stability(process_variable, dt, self.stable_threshold, self.cooldown_start_temp, 30):
                 k1 = 0.5
@@ -55,29 +60,32 @@ class Skogestad(Tuner):
                 Tuner.store_tuner_config("skogestad", self.get_config())
             return 0
 
-        if not self.reached_baseline:
-            if self.check_stability(process_variable, dt, self.stable_threshold, self.initial_process_variable, 15):
-                self.current_output = self.initial_output + self.step_amplitude
-                self.baseline = process_variable
+        
+        if not self.reached_baseline:   # Rising to baseline temperature
+            if self.check_stability(process_variable, dt, self.stable_threshold, self.initial_process_variable, 15): # Stabilized at baseline temperature
+                self.current_output = self.initial_output + self.step_amplitude # Set controller output to rise to step temperature
+                self.baseline = process_variable # Get baseline temperature
                 self.reached_baseline = True
-                self.step_time = 0
             return self.current_output
-        else:
-            self.step_time += dt
-            if self.check_stability(process_variable,dt, self.stable_threshold, self.baseline, 15):
-                final_output = self.get_stabilized_output()
+        else:                           # Rising to step temperature
+            if self.check_stability(process_variable,dt, self.stable_threshold, self.baseline, 15): # Stabilized at step temperature
+                final_output = self.get_stabilized_output() # Get step temperature
+                
                 self.k = (final_output - self.baseline) / self.step_amplitude
+                
+                # Measure dead time
                 self.dead_time = 0
                 lowest_y = float("inf")
                 for i, y in enumerate(self.output_data):
                     if y < lowest_y:
                         lowest_y = y
                     self.dead_time += self.time_data[i]
-                    if y >= lowest_y + 0.005 * (final_output - lowest_y):
+                    if y >= lowest_y + 0.005 * (final_output - lowest_y): # Dead time is found at the first temperature above the lowest temperature (-noise)
                         self.dead_time -= dt
                         break
-
-                target = self.baseline + 0.632 * (final_output - self.baseline)
+                
+                # Measure rise time
+                target = self.baseline + 0.632 * (final_output - self.baseline) # Rise time is defined as reaching 63.2% of the step temperature from the baseline temperature
                 self.rise_time = 0
                 for i, y in enumerate(self.output_data):
                     self.rise_time += self.time_data[i]
@@ -85,13 +93,15 @@ class Skogestad(Tuner):
                         self.baseline = 99999
                         self.baseline_time = self.rise_time
                     if y >= target:
-                        break
+                        break    
                 self.rise_time -= self.baseline_time
                 if self.rise_time <= 0:
                     self.rise_time = dt
-                self.cooldown_start_temp = process_variable
+                    
+                self.cooldown_start_temp = process_variable # Move away from this temperature before counting as stabilized
                 self.final_cooldown = True
-                return 0
+                
+                self.current_output = 0 # Turn output off after measurements
             return self.current_output
 
     def get_config(self) -> dict:
