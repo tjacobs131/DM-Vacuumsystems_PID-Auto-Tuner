@@ -11,7 +11,6 @@ END_VAR
     <Implementation>
       <ST><![CDATA[GVL.rTempSensor := INT_TO_REAL(iTemperatureSensor) / 10;
 byHeaterActuator := REAL_TO_BYTE((GVL.iHeaterActuator * 50) / 100);
-
 GVL.iRealPower := WORD_TO_INT(wRealPower);]]></ST>
     </Implementation>
   </POU>

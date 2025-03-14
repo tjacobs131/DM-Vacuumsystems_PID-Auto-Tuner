@@ -5,19 +5,26 @@
 VAR_GLOBAL
 	rTempSensor: REAL := 0.0;	// Temperature (°C)
 	iHeaterActuator: INT := 0;	// Heater power (0-100%)
-	rSetpoint: REAL := 20.0;	// Target temperature (°C)
+	rSetpoint: REAL := 60.0;	// Target temperature (°C)
 	
 	iRealPower: INT := 0;
 	
-	arTempData: ARRAY[0..6000] OF REAL;
-	arControllerData: ARRAY[0..6000] OF INT;
-	arRealPowerData: ARRAY[0..6000] OF INT;
+	arTempData: ARRAY[0..20000] OF REAL;
+	arControllerData: ARRAY[0..20000] OF INT;
+	arRealPowerData: ARRAY[0..20000] OF INT;
 	currentIndex: INT := 0;		// Global index to add data to data arrays
-	cyclesToSkip: INT := 200;
+	iMaxIndex: INT := 20000 - 1;
+	
+	cyclesToSkip: INT := 150;
+	currentCycle: INT := 0;
 	
 	kp: REAL := 0.196;
 	ki: REAL := 0.00326;
 	kd: REAL := 0;
+	rSetpointPower: INT;
+	
+	powerSlope: REAL := 1;
+	powerIntercept: REAL := 0;
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

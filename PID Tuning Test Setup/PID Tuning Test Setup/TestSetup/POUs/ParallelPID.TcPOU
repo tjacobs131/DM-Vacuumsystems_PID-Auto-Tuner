@@ -61,7 +61,10 @@ GVL.arTempData[GVL.currentIndex] := rFeedbackVariable;
 GVL.arControllerData[GVL.currentIndex] := iOutput;
 GVL.arRealPowerData[GVL.currentIndex] := GVL.iRealPower;
 
-GVL.currentIndex := GVL.currentIndex + 1;]]></ST>
+GVL.currentIndex := GVL.currentIndex + 1;
+IF GVL.currentIndex > GVL.iMaxIndex THEN
+	GVL.currentIndex := 0;
+END_IF]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

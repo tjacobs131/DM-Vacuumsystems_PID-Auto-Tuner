@@ -11,6 +11,7 @@ VAR
 	getTime: GETSYSTEMTIME;
 	
 	deltaTime: REAL := 0.0;
+	skippedDeltaTime: REAL := 0.0;
 	
 	skogestadPID: Skogestad;
 	parallelPID: ParallelPID;
@@ -20,50 +21,71 @@ VAR
 	useSkogestad: BOOL := TRUE;
 	
 	init: BOOL := TRUE;
+	desiredActuator: INT;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF init THEN
-	lastPID := GVL.kp + GVL.ki + GVL.kd;
-	init := FALSE;
+      <ST><![CDATA[// Initialization
+IF init THEN
+    lastPID := GVL.kp + GVL.ki + GVL.kd;
+    init := FALSE;
 END_IF
 
-// Update the useSkogestad flag based if the tuner has changed PID
+// Update the useSkogestad flag if PID values have changed
 IF NOT (lastPID = GVL.kp + GVL.ki + GVL.kd) THEN
     useSkogestad := FALSE;
 END_IF
 
-// Get the current system time
-getTime(timeLoDW => loTime, 
-		timeHiDW => hiTime);
+// Get current system time
+getTime(timeLoDW => loTime, timeHiDW => hiTime);
 currentTime := SHL(hiTime, 32) + loTime;
 
 // Calculate deltaTime
-IF (previousTime = 0) THEN
+IF previousTime = 0 THEN
     previousTime := currentTime;
 ELSE
     deltaTime := ULINT_TO_REAL(currentTime - previousTime) / 10000000;
     previousTime := currentTime;
 END_IF
 
-// Execute the appropriate PID controller
-IF NOT (deltaTime = 0.0) THEN
-    IF useSkogestad THEN
-        skogestadPID(
-            rFeedbackVariable := GVL.rTempSensor,
-            rSetpoint := GVL.rSetpoint,
-            rDeltaTime := deltaTime,
-            iOutput => GVL.iHeaterActuator
-        );
-    ELSE
-        parallelPID(
-            rFeedbackVariable := GVL.rTempSensor,
-            rSetpoint := GVL.rSetpoint,
-            rDeltaTime := deltaTime,
-            iOutput => GVL.iHeaterActuator
-        );
-    END_IF
-END_IF]]></ST>
+IF GVL.currentCycle = GVL.cyclesToSkip THEN
+	GVL.currentCycle := 0;
+	GVL.arTempData[GVL.currentIndex] := GVL.rTempSensor;
+	GVL.arControllerData[GVL.currentIndex] := desiredActuator;
+	GVL.arRealPowerData[GVL.currentIndex] := GVL.iRealPower;
+	GVL.currentIndex := GVL.currentIndex + 1;
+	IF GVL.currentIndex > GVL.iMaxIndex THEN
+		GVL.currentIndex := 0;
+	END_IF
+	
+	// Execute skogestad if we should be tuning
+	IF useSkogestad THEN
+		skogestadPID(
+			rFeedbackVariable := GVL.rTempSensor,
+			rSetpoint := GVL.rSetpoint,
+			rDeltaTime := skippedDeltaTime,
+			iOutput => desiredActuator
+		);	
+	END_IF
+	
+	skippedDeltaTime := 0;
+ELSE
+	skippedDeltaTime := skippedDeltaTime + deltaTime;
+	GVL.currentCycle := GVL.currentCycle + 1;
+END_IF
+
+// Execute PID if we aren't tuning
+IF NOT useSkogestad THEN
+	parallelPID(
+		rFeedbackVariable := GVL.rTempSensor,
+		rSetpoint := GVL.rSetpoint,
+		rDeltaTime := deltaTime,
+		iOutput => desiredActuator
+	);
+END_IF
+
+// Use conversion formula for the actuator command.
+GVL.iHeaterActuator := REAL_TO_INT((desiredActuator - GVL.powerIntercept) / GVL.powerSlope);]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>
