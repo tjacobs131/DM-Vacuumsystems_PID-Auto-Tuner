@@ -42,15 +42,14 @@ Added use cases to report
 Implement parallel PID on test-setup
 Start working on Skogestad tuner
 Implemented stability detection
-Implemented Skogestad tuner
+    Implemented Skogestad tuner
+Investigated double heater control issue
+    Implemented actuator control linearization
 
 # ?
-    - How long is the measurement time / time constant?
-    - How large is the dead-time compared to cycle-time? 0.5x? 2x?
-    - Do you use integral clamping?
-    - Using a parallel, series or ideal PID?
-    - !!D? Only PI?
-    - Proof of work (sim || test setup)
-      - Simulate actual scenario
-      - Match test setup
-      - Jasper's math?
+    - Parameters
+        •	tc
+        •	setpoint
+        •	Stabilization threshold
+        •	Duration within stable threshold
+        •	(step controller output)
