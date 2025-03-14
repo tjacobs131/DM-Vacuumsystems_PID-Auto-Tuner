@@ -15,7 +15,7 @@ class AstromHagglund(Parallel_PID):
         self.iterations_to_skip = 1
         self.target_iterations = target_iterations
 
-        # PID gains (calculated later)
+        # PID gains
         self.kp = 0
         self.ki = 0
         self.kd = 0
@@ -26,7 +26,7 @@ class AstromHagglund(Parallel_PID):
         self.kuAvg = 0
         self.tuAvg = 0
 
-        # Mode and output
+        # Output
         self.heating = True
         self.max_controller_output = 100
         self.min_controller_output = 0
@@ -45,6 +45,8 @@ class AstromHagglund(Parallel_PID):
 
         # Final flag (once testing is done or config loaded)
         self.final_cooldown = False
+        
+        # Range in which the temperature is considered stable or oscillating
         self.stable_threshold = 0.8
         self.oscillation_threshold = 0.2
 
@@ -59,6 +61,7 @@ class AstromHagglund(Parallel_PID):
 
     def calculate_output(self, process_variable: float, setpoint: float, dt: float) -> float:
         # If in final cooldown, just output the minimum value and wait to stabilize
+        # This prepares system for evaluation
         if self.final_cooldown:
             if self.check_stability(process_variable, dt, self.stable_threshold, self.cooldown_start_temp, 30):
                 
@@ -68,7 +71,7 @@ class AstromHagglund(Parallel_PID):
                 Tuner.store_tuner_config("astrom_hagglund", self.get_config())
             return self.min_controller_output
 
-        # Check if all iterations have been completed.
+        # Check if all iterations have been completed
         if self.iterations > self.target_iterations + self.iterations_to_skip:
             self.heating = False
             self.final_cooldown = True
@@ -78,7 +81,7 @@ class AstromHagglund(Parallel_PID):
             # Save the averaged values to config.
             return self.min_controller_output
 
-        # Record min/max process values.
+        # Record min/max process values
         if process_variable > self.max_recorded_output:
             self.max_recorded_output = process_variable
         if process_variable < self.min_recorded_output:
@@ -86,7 +89,7 @@ class AstromHagglund(Parallel_PID):
 
         self.timer += dt
 
-        # Switch between heating and cooling modes.
+        # Switch between heating and cooling modes causing forced oscillations
         if self.heating and process_variable > setpoint + self.oscillation_threshold:
             self.heating = False
             self.time1 = self.timer
