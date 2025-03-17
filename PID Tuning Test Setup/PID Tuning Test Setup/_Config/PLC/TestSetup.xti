@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <TcSmItem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.44" ClassName="CNestedPlcProjDef">
 	<Project GUID="{4D035378-D5B5-49C5-8759-EE48E38447A7}" Name="TestSetup" PrjFilePath="..\..\TestSetup\TestSetup.plcproj" TmcFilePath="..\..\TestSetup\TestSetup.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-		<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TestSetup\TestSetup.tmc" TmcHash="{2FF2158E-CED1-669B-6A18-F6ED2A20CD73}">
+		<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TestSetup\TestSetup.tmc" TmcHash="{2B674F27-04AB-FFCD-5FF6-63767192778B}">
 			<Name>TestSetup Instance</Name>
 			<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 			<Vars VarGrpType="1">

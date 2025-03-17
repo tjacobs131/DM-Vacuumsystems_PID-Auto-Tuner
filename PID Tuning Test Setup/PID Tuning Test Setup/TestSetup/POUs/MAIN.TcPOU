@@ -26,6 +26,7 @@ currentTime := SHL(hiTime, 32) + loTime;
 // Calculate deltaTime
 IF previousTime = 0 THEN
     previousTime := currentTime;
+	RETURN;
 ELSE
     deltaTime := ULINT_TO_REAL(currentTime - previousTime) / 10000000;
     previousTime := currentTime;

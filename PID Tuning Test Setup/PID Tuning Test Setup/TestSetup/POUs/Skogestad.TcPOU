@@ -15,15 +15,15 @@ VAR PERSISTENT
     deadTime: REAL := 0;
 END_VAR
 VAR
-    loadConfig: BOOL := TRUE; 				// Will use stored system dynamics if true
+    loadConfig: BOOL := TRUE; 		// Will use stored system dynamics if true
 
-    k1: REAL := 3.0;						// Optional parameter (higher = slower, robust response | lower = faster, oscillatory response)
-    lambda: REAL := 0.0;    				// Measured dead time, or delta time. Whichever is greater
+    k1: REAL := 3.0;				// Optional parameter (higher = slower, robust response | lower = faster, oscillatory response)
+    lambda: REAL := 0.0;    		// Measured dead time, or delta time. Whichever is greater
 	
     // Temperature step-response variables
-    baselineTemp: REAL := 0.0;				// Measured temperature when stabilized at the baseline output
-    stepTemp: REAL := 0.0;					// Measured temperature when stabilized at the step output
-    stepTime: REAL := 0;					// Time to reach stabilized temperature at step output
+    baselineTemp: REAL := 0.0;		// Measured temperature when stabilized at the baseline output
+    stepTemp: REAL := 0.0;			// Measured temperature when stabilized at the step output
+    stepTime: REAL := 0;			// Time to reach stabilized temperature at step output
 	
 	// Stability check
 	checkStability: CheckStability;			// Stability checking function block
@@ -33,9 +33,9 @@ VAR
     stableTemp: REAL := 0;					// Averaged temperature of last few readings
     
 	// Controller output
-	currentOutput: INT := 0;				// Current controller output
-    baselineOutput: INT := 5;				// Controller output with which the baseline temperature is reached
-    stepOutput: INT := 15;					// Controller output with which the baseline + step temperature is reached
+	currentOutput: INT := 0;		// Current controller output
+    baselineOutput: INT := 5;		// Controller output with which the baseline temperature is reached
+    stepOutput: INT := 15;			// Controller output with which the baseline + step temperature is reached
 	
 	// System dynamics measurement data
     arTemp: ARRAY[0..10000] OF REAL;
@@ -43,17 +43,17 @@ VAR
     currentIndex: INT := 0;
 
 	// System dynamics processing data
-    lowestTemp: REAL := 9999;					// Stores the lowest temperature found during measurement
-    baselineTime: REAL := 0;					// Stores the time at which the baseline temperature was reached
-    measureTemp: REAL := 0;						// 63.2% Of the stabilized step temperature
-    initTemp: REAL := 0.0;						// Temperature to move away from before setting stabilized. A larger dead-time than StableWaitTime would set stabilized too early.
-	i: INT := 0;								// For loop index
+    lowestTemp: REAL := 9999;	// Stores the lowest temperature found during measurement
+    baselineTime: REAL := 0;	// Stores the time at which the baseline temperature was reached
+    measureTemp: REAL := 0;		// 63.2% Of the stabilized step temperature
+    initTemp: REAL := 0.0;		// Temperature to move away from before setting stabilized. A larger dead-time than StableWaitTime would set stabilized too early.
+	i: INT := 0;				// For loop index
 
     tuningPhase: TunePhase := TunePhase.init; 	// Current tuning phase
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[IF tuningPhase = TunePhase.init THEN
-	currentOutput := 0; 	// Make sure output is off
+	currentOutput := 0; // Make sure output is off
 	
 	IF loadConfig THEN
 		tuningPhase := TunePhase.done;	// Skip tuning if we are using stored variables
@@ -69,12 +69,12 @@ END_VAR]]></Declaration>
                    bIsStable => stabilized, 
                    rStabilizedOutput => stableTemp);
     IF stabilized THEN
-        tuningPhase := TunePhase.baseline;	// Switch to baseline phase
-		currentOutput := baselineOutput; 	// Set controller output for baseline phase
+        tuningPhase := TunePhase.baseline; // Switch to baseline phase
+		currentOutput := baselineOutput;  // Set controller output for baseline phase
 		
 		// Reset stabilization
-		initTemp := stableTemp;	// Move away from current temperature before setting stabilized
-        stabilized := FALSE;	// Reset stabilized
+		initTemp := stableTemp; // Move away from current temperature before setting stabilized
+        stabilized := FALSE; // Reset stabilized
     ELSE
         RETURN;
     END_IF
@@ -162,10 +162,10 @@ ELSIF tuningPhase = TunePhase.done THEN
     GVL.ki := GVL.kp / MIN(riseTime, k1 * (lambda + deadTime));
     GVL.kd := 0;
 	
-	GVL.doTuning := FALSE;		// Let PID controller take over as we are done tuning
+	GVL.doTuning := FALSE; // Let PID controller take over as we are done tuning
 END_IF
 
-GVL.iHeaterActuator := currentOutput;	// Apply current output to actuator
+GVL.iHeaterActuator := currentOutput; // Apply current output to actuator
 iOutput := currentOutput;]]></ST>
     </Implementation>
   </POU>

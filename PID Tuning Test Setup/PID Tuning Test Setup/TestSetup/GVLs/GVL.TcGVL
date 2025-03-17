@@ -17,18 +17,18 @@ VAR_GLOBAL
 	iRealPower: INT := 0;		// Actual heater power (W)
 	
 	// Data arrays for logging
-	arTempData: ARRAY[0..20000] OF REAL;
-	arSetpointData: ARRAY[0..20000] OF REAL;
-	arControllerData: ARRAY[0..20000] OF INT;
-	arRealPowerData: ARRAY[0..20000] OF INT;
+	arTempData: ARRAY[0..1000] OF REAL;
+	arSetpointData: ARRAY[0..1000] OF REAL;
+	arControllerData: ARRAY[0..1000] OF INT;
+	arRealPowerData: ARRAY[0..1000] OF INT;
 	currentIndex: INT := 0;		// Global index to add data to data arrays
-	iMaxIndex: INT := 20000 - 1;
+	iMaxIndex: INT := 1000 - 1;
 	
 	// Limit run rate
-	cyclesToSkip: INT := 180;
+	cyclesToSkip: INT := 250;
 	currentCycle: INT := 0;
 	
-	doTuning: BOOL := TRUE; 	// Whether or not to run the tuner
+	doTuning: BOOL := FALSE; 	// Whether or not to run the tuner
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

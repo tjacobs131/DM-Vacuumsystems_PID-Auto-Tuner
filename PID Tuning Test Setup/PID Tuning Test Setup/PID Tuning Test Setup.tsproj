@@ -11,6 +11,129 @@
 		<Plc>
 			<Project File="TestSetup.xti"/>
 		</Plc>
+		<Analytics>
+			<Name>ANALYTICS</Name>
+			<ImageId>281</ImageId>
+			<Symbols>
+				<Symbol>Box 5 (NRGC-ECAT).Module 1 (RGC1P60CM32GEN).TxPDO.Status</Symbol>
+				<Symbol>Box 5 (NRGC-ECAT).Module 1 (RGC1P60CM32GEN).TxPDO.Alarm</Symbol>
+				<Symbol>Box 5 (NRGC-ECAT).Module 1 (RGC1P60CM32GEN).TxPDO.Voltage RMS reading</Symbol>
+				<Symbol>Box 5 (NRGC-ECAT).Module 1 (RGC1P60CM32GEN).TxPDO.Hold current reading</Symbol>
+				<Symbol>Box 5 (NRGC-ECAT).Module 1 (RGC1P60CM32GEN).TxPDO.Current RMS reading</Symbol>
+				<Symbol>Box 5 (NRGC-ECAT).Module 1 (RGC1P60CM32GEN).TxPDO.Real power reading</Symbol>
+				<Symbol>Term 1 (EK1100).Term 4 (EL3314).TC Inputs Channel 1.Status</Symbol>
+				<Symbol>Term 1 (EK1100).Term 4 (EL3314).TC Inputs Channel 1.Value</Symbol>
+				<Symbol>Term 1 (EK1100).Term 4 (EL3314).TC Inputs Channel 2.Status</Symbol>
+				<Symbol>Term 1 (EK1100).Term 4 (EL3314).TC Inputs Channel 2.Value</Symbol>
+				<Symbol>Term 1 (EK1100).Term 4 (EL3314).TC Inputs Channel 3.Status</Symbol>
+				<Symbol>Term 1 (EK1100).Term 4 (EL3314).TC Inputs Channel 3.Value</Symbol>
+				<Symbol>Term 1 (EK1100).Term 4 (EL3314).TC Inputs Channel 4.Status</Symbol>
+				<Symbol>Term 1 (EK1100).Term 4 (EL3314).TC Inputs Channel 4.Value</Symbol>
+				<Symbol>Term 1 (EK1100).Term 2 (EL1008).Channel 1.Input</Symbol>
+				<Symbol>Term 1 (EK1100).Term 2 (EL1008).Channel 2.Input</Symbol>
+				<Symbol>Term 1 (EK1100).Term 2 (EL1008).Channel 3.Input</Symbol>
+				<Symbol>Term 1 (EK1100).Term 2 (EL1008).Channel 4.Input</Symbol>
+				<Symbol>Term 1 (EK1100).Term 2 (EL1008).Channel 5.Input</Symbol>
+				<Symbol>Term 1 (EK1100).Term 2 (EL1008).Channel 6.Input</Symbol>
+				<Symbol>Term 1 (EK1100).Term 2 (EL1008).Channel 7.Input</Symbol>
+				<Symbol>Term 1 (EK1100).Term 2 (EL1008).Channel 8.Input</Symbol>
+				<Symbol>Inputs.Frm0State</Symbol>
+				<Symbol>Inputs.Frm0WcState</Symbol>
+				<Symbol>Box 5 (NRGC-ECAT).WcState.WcState</Symbol>
+				<Symbol>Term 1 (EK1100).Term 3 (EL2008).WcState.WcState</Symbol>
+				<Symbol>Term 1 (EK1100).Term 2 (EL1008).WcState.WcState</Symbol>
+				<Symbol>Term 1 (EK1100).Term 4 (EL3314).WcState.WcState</Symbol>
+				<Symbol>Inputs.Frm0InputToggle</Symbol>
+				<Symbol>Box 5 (NRGC-ECAT).WcState.InputToggle</Symbol>
+				<Symbol>Term 1 (EK1100).Term 2 (EL1008).WcState.InputToggle</Symbol>
+				<Symbol>Term 1 (EK1100).Term 4 (EL3314).WcState.InputToggle</Symbol>
+				<Symbol>Inputs.SlaveCount</Symbol>
+				<Symbol>Inputs.DevState</Symbol>
+				<Symbol>Box 5 (NRGC-ECAT).Module 1 (RGC1P60CM32GEN).RxPDO.Control level</Symbol>
+				<Symbol>Term 1 (EK1100).Term 3 (EL2008).Channel 1.Output</Symbol>
+				<Symbol>Term 1 (EK1100).Term 3 (EL2008).Channel 2.Output</Symbol>
+				<Symbol>Term 1 (EK1100).Term 3 (EL2008).Channel 3.Output</Symbol>
+				<Symbol>Term 1 (EK1100).Term 3 (EL2008).Channel 4.Output</Symbol>
+				<Symbol>Term 1 (EK1100).Term 3 (EL2008).Channel 5.Output</Symbol>
+				<Symbol>Term 1 (EK1100).Term 3 (EL2008).Channel 6.Output</Symbol>
+				<Symbol>Term 1 (EK1100).Term 3 (EL2008).Channel 7.Output</Symbol>
+				<Symbol>Term 1 (EK1100).Term 3 (EL2008).Channel 8.Output</Symbol>
+				<Symbol>Outputs.Frm0Ctrl</Symbol>
+				<Symbol>Outputs.Frm0WcCtrl</Symbol>
+				<Symbol>Outputs.DevCtrl</Symbol>
+				<Symbol>PlcTask Inputs.ConvertIO.wRealPower</Symbol>
+				<Symbol>PlcTask Inputs.ConvertIO.iTemperatureSensor</Symbol>
+				<Symbol>PlcTask Outputs.ConvertIO.byHeaterActuator</Symbol>
+			</Symbols>
+			<AddiStreamDescription>
+				<Address></Address>
+				<Longitude></Longitude>
+				<Latitude></Latitude>
+			</AddiStreamDescription>
+			<SystemAlias></SystemAlias>
+			<DataLogger GUID="{B8897587-E6E8-8669-7F30-C21B68AA876E}">
+				<Name>Data Logger 1</Name>
+				<Name></Name>
+				<ParameterValues>
+					<Value>
+						<Name>Data Format</Name>
+						<EnumText>ANALYTICS_FORMAT_FILE</EnumText>
+					</Value>
+					<Value>
+						<Name>Data Compression</Name>
+						<EnumText>ANALYTICS_COMPRESSION_RL</EnumText>
+					</Value>
+					<Value>
+						<Name>Max. Compression Compare Width</Name>
+						<EnumText>ANALYTICS_COMP_WIDTH_8</EnumText>
+					</Value>
+					<Value>
+						<Name>MQTT Host Name</Name>
+						<String>127.0.0.1</String>
+					</Value>
+					<Value>
+						<Name>MQTT Tcp Port</Name>
+						<Value>1883</Value>
+					</Value>
+					<Value>
+						<Name>MQTT Main Topic</Name>
+						<String>DefaultMainTopic</String>
+					</Value>
+					<Value>
+						<Name>MQTT Client ID</Name>
+						<String></String>
+					</Value>
+					<Value>
+						<Name>MQTT User Name</Name>
+						<String></String>
+					</Value>
+					<Value>
+						<Name>MQTT Password</Name>
+						<String></String>
+					</Value>
+				</ParameterValues>
+				<Stream Caller="#x03040040" Adi="#x03040040" Id="#x02040001" CntAds="#x00000020" CntFile="#x00000010" CntRing="#x00000002" SamplingDivider="1" DeviceStream="true">
+					<Name>Device 5 (EtherCAT).Image</Name>
+					<DisplayName>DeviceStream1</DisplayName>
+					<FileDir>%TC_BOOTPRJPATH%</FileDir>
+				</Stream>
+				<Stream Caller="#x08502001" Adi="#x08502000" Id="#x02040002" CntAds="#x00000020" CntFile="#x00000010" CntRing="#x00000002" SamplingDivider="1">
+					<Name>TestSetup.TestSetup Instance.PlcTask</Name>
+					<DisplayName>PlcStream1</DisplayName>
+					<LoggerObject Enabled="true">
+						<AreaName></AreaName>
+						<SymName></SymName>
+						<HierName>PlcTask Inputs</HierName>
+					</LoggerObject>
+					<LoggerObject Enabled="true">
+						<AreaName></AreaName>
+						<SymName></SymName>
+						<HierName>PlcTask Outputs</HierName>
+					</LoggerObject>
+					<FileDir>%TC_BOOTPRJPATH%</FileDir>
+				</Stream>
+			</DataLogger>
+		</Analytics>
 		<Io>
 			<Device File="Device 5 (EtherCAT).xti" Id="5"/>
 		</Io>
