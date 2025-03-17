@@ -49,6 +49,9 @@ Investigated double heater control issue
 
 # Week 6
 Decided against control linearization
+Explain test-setup in report
+Add test-setup step test to report
+Add setpoint to visualization
 
 # ?
     - Parameters
