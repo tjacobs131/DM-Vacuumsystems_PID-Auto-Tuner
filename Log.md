@@ -17,7 +17,7 @@ Created basic HMI for heater simulation
 Added possible tuners
     Started writing tuning methods evaluation
 Understand IFT tuning gradient descent method
-    Decided to use Ziegler-Nichols for sure as a baseline result
+    Decided to use Ziegler-Nichols as a baseline result
 
 # Week 3
 Implemented project plan feedback
@@ -39,12 +39,16 @@ Added use cases to report
     Started binding IO on test-setup PLC
 
 # Week 5
+Transitioned to test-setup
 Implement parallel PID on test-setup
 Start working on Skogestad tuner
 Implemented stability detection
     Implemented Skogestad tuner
 Investigated double heater control issue
-    Implemented actuator control linearization
+    Implemented actuator control linearization through linear regression
+
+# Week 6
+Decided against control linearization
 
 # ?
     - Parameters
