@@ -3,71 +3,63 @@
   <POU Name="Skogestad" Id="{aa431b1a-4355-4557-bb11-a5f63cc0b804}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK Skogestad EXTENDS ParallelPID
 VAR_INPUT
-
+// Set in superclass
 END_VAR
 VAR_OUTPUT
-
+// Set in superclass
 END_VAR
 VAR PERSISTENT 
+	// Store measured system dynamics in case of recalculation with different parameters
     riseTime: REAL := 0;
     k: REAL := 0;
     deadTime: REAL := 0;
-    
-    powerIntercept: REAL := 0;
 END_VAR
 VAR
-    k1: REAL := 3.0;
-    lambda: REAL := 0.0;    
+    loadConfig: BOOL := TRUE; 				// Will use stored system dynamics if true
+
+    k1: REAL := 3.0;						// Optional parameter (higher = slower, robust response | lower = faster, oscillatory response)
+    lambda: REAL := 0.0;    				// Measured dead time, or delta time. Whichever is greater
+	
     // Temperature step-response variables
-    baselineTemp: REAL := 0.0;
-    stepTemp: REAL := 0.0;
-    stepTime: REAL := 0;
-    rStableWaitTime: REAL := 20;
-    checkStability: CheckStability;
-    stabilized: BOOL := FALSE;
-    stableTemp: REAL := 0;
+    baselineTemp: REAL := 0.0;				// Measured temperature when stabilized at the baseline output
+    stepTemp: REAL := 0.0;					// Measured temperature when stabilized at the step output
+    stepTime: REAL := 0;					// Time to reach stabilized temperature at step output
+	
+	// Stability check
+	checkStability: CheckStability;			// Stability checking function block
+    rStableWaitTime: REAL := 20;			// Time to wait before stabilized
+	runningStableThreshold: REAL := 0.1;	// Range in which the temperature must stabilize
+    stabilized: BOOL := FALSE;				// Temperature is currently stable if true
+    stableTemp: REAL := 0;					// Averaged temperature of last few readings
     
-    baselineOutput: INT := 40;
-    stepOutput: INT := 60;
-    currentOutput: INT := 0;
-    
-    arraySize: INT := 10000;
+	// Controller output
+	currentOutput: INT := 0;				// Current controller output
+    baselineOutput: INT := 5;				// Controller output with which the baseline temperature is reached
+    stepOutput: INT := 15;					// Controller output with which the baseline + step temperature is reached
+	
+	// System dynamics measurement data
     arTemp: ARRAY[0..10000] OF REAL;
     arTime: ARRAY[0..10000] OF REAL;
     currentIndex: INT := 0;
-    i: INT := 0;
-    
-    lowestTemp: REAL := 9999;
-    baselineTime: REAL := 0;
-    measureTemp: REAL := 0;
-    initTemp: REAL := 0.0;
-    runningStableThreshold: REAL := 0.1;
-    loadConfig: BOOL := FALSE;
-    
-    // Tuning phase state
-    tuningPhase: TunePhase := TunePhase.init;
-    
-    // Linearize phase
-    sweepIndex: INT := 0;
-    sweepCount: INT := 5;
-    sweepPoints: ARRAY[0..4] OF INT := [10, 30, 50, 70, 90];
-    sweepWaitTime: TIME := T#5S;
-    sweepTimer: TON;
-    
-    // Regression variables
-    sampleCount: INT;
-    sumX: REAL := 0;
-    sumY: REAL := 0;
-    sumXY: REAL := 0;
-    sumX2: REAL := 0;
-	
-	sweepDataCount: INT := 0;
-    sweepControllerData: ARRAY[0..4] OF INT; // for 5 sweep points
-    sweepRealPowerData: ARRAY[0..4] OF INT;
+
+	// System dynamics processing data
+    lowestTemp: REAL := 9999;					// Stores the lowest temperature found during measurement
+    baselineTime: REAL := 0;					// Stores the time at which the baseline temperature was reached
+    measureTemp: REAL := 0;						// 63.2% Of the stabilized step temperature
+    initTemp: REAL := 0.0;						// Temperature to move away from before setting stabilized. A larger dead-time than StableWaitTime would set stabilized too early.
+	i: INT := 0;								// For loop index
+
+    tuningPhase: TunePhase := TunePhase.init; 	// Current tuning phase
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[IF tuningPhase = TunePhase.init THEN
-	currentOutput := 0;
+	currentOutput := 0; 	// Make sure output is off
+	
+	IF loadConfig THEN
+		tuningPhase := TunePhase.done;	// Skip tuning if we are using stored variables
+		RETURN;
+	END_IF
+	
     // Wait for temperature to stabilize before starting tuning.
     checkStability(rCurrentValue := rFeedbackVariable, 
                    rDeltaTime := rDeltaTime, 
@@ -77,18 +69,18 @@ END_VAR]]></Declaration>
                    bIsStable => stabilized, 
                    rStabilizedOutput => stableTemp);
     IF stabilized THEN
-        initTemp := stableTemp;
-        // Start with linearizing the output
-        tuningPhase := TunePhase.linearizeOutput;
-        stabilized := FALSE;
-        // Reset indices for sweep data collection.
-        currentIndex := 0;
-        GVL.currentIndex := 0;
+        tuningPhase := TunePhase.baseline;	// Switch to baseline phase
+		currentOutput := baselineOutput; 	// Set controller output for baseline phase
+		
+		// Reset stabilization
+		initTemp := stableTemp;	// Move away from current temperature before setting stabilized
+        stabilized := FALSE;	// Reset stabilized
     ELSE
         RETURN;
     END_IF
 END_IF
-	
+
+// Stability check for all subsequent tuning phases
 checkStability(rCurrentValue := rFeedbackVariable, 
                    rDeltaTime := rDeltaTime, 
                    rThreshold := runningStableThreshold, 
@@ -97,73 +89,36 @@ checkStability(rCurrentValue := rFeedbackVariable,
                    bIsStable => stabilized, 
                    rStabilizedOutput => stableTemp);
 
-IF tuningPhase = TunePhase.linearizeOutput THEN
-	IF NOT loadConfig THEN
-		// Set the controller output
-		currentOutput := sweepPoints[sweepIndex];
-		// Directly assign to the actuator
-		
-		
-		// Start a timer to wait for the system to settle.
-		sweepTimer(IN := TRUE, PT := sweepWaitTime);
-		IF sweepTimer.Q THEN
-			// Record the sweep data.
-			sweepControllerData[sweepDataCount] := currentOutput;
-			sweepRealPowerData[sweepDataCount] := GVL.iRealPower;
-			sweepDataCount := sweepDataCount + 1;
-			
-			// Reset timer and move to the next sweep point.
-			sweepTimer(IN := FALSE);
-			sweepIndex := sweepIndex + 1;
-			IF sweepIndex >= sweepCount THEN // When sweep complete
-				// Compute regression from sweep data.
-				sampleCount := sweepDataCount;
-				sumX := 0; sumY := 0; sumXY := 0; sumX2 := 0;
-				FOR i := 0 TO sampleCount - 1 DO
-					sumX := sumX + sweepControllerData[i];
-					sumY := sumY + sweepRealPowerData[i];
-					sumXY := sumXY + sweepControllerData[i] * sweepRealPowerData[i];
-					sumX2 := sumX2 + sweepControllerData[i] * sweepControllerData[i];
-				END_FOR;
-				GVL.powerSlope := (sampleCount * sumXY - sumX * sumY) / (sampleCount * sumX2 - sumX * sumX);
-				GVL.powerIntercept := (sumY - GVL.powerSlope * sumX) / INT_TO_REAL(sampleCount);
-
-				// The conversion formula is:
-				//   HeaterActuator = (DesiredRealPower - powerIntercept) / powerSlope
-				
-				tuningPhase := TunePhase.baseline; // Move to the next tuning pphase
-			END_IF
-		END_IF
-	ELSE
-		tuningPhase := TunePhase.done;
-		RETURN;
-	END_IF
-
-ELSIF tuningPhase = TunePhase.baseline THEN
+IF tuningPhase = TunePhase.baseline THEN
+	// Store time and temperature data
 	arTime[currentIndex] := rDeltaTime;
 	arTemp[currentIndex] := GVL.rTempSensor;
 	currentIndex := currentIndex + 1;	
 
-    // Hold the baseline output until temperature stabilizes.
-    currentOutput := baselineOutput;
     IF stabilized THEN
+		tuningPhase := TunePhase.step;
         currentOutput := stepOutput;
+		
         baselineTemp := stableTemp;
-        tuningPhase := TunePhase.step;
+		
+		// Reset stabilization
         initTemp := stableTemp;
         stabilized := FALSE;
     END_IF
 
 ELSIF tuningPhase = TunePhase.step THEN
+	// Store time and temperature data
 	arTime[currentIndex] := rDeltaTime;
 	arTemp[currentIndex] := GVL.rTempSensor;
 	currentIndex := currentIndex + 1;		
 
-    // After applying a step, measure the temperature response.
+    // After stabilizing at step temperature, measure system dynamics based on collected data
     IF stabilized THEN
-        stepTemp := stableTemp; 
+        stepTemp := stableTemp;
+		
         k := (stepTemp - baselineTemp) / (stepOutput - baselineOutput);
-        // Compute dead-time.
+		
+        // Compute dead-time
         deadTime := 0.0;
         riseTime := 0.0;
         lowestTemp := 9999;
@@ -177,40 +132,41 @@ ELSIF tuningPhase = TunePhase.step THEN
                 deadTime := deadTime + arTime[i];
             END_IF
         END_FOR;
-        // Compute rise-time (63.2% response).
+		
+        // Compute rise-time (63.2% response)
         measureTemp := baselineTemp + 0.632 * (stepTemp - baselineTemp);
         baselineTime := 0.0;
         FOR i := 0 TO currentIndex - 1 DO
             riseTime := riseTime + arTime[i];
             IF arTemp[i] > baselineTemp THEN 
                 baselineTime := riseTime;
-                baselineTemp := 3.402823E+38; // Lock value.
+                baselineTemp := 3.402823E+38; // Lock value
             END_IF
             IF arTemp[i] > measureTemp THEN
                 EXIT;
             END_IF
         END_FOR;
         riseTime := riseTime - baselineTime;
+		
         tuningPhase := TunePhase.done;
+		currentOutput := 0;
     END_IF
 
 ELSIF tuningPhase = TunePhase.done THEN
     // Calculate final PID gains.
-    k1 := riseTime / (deadTime + deadTime);
+    k1 := riseTime / (deadTime + deadTime); // Default parameter behavior
     lambda := MAX(deadTime, rDeltaTime);
+	
+	// Calculate PID
     GVL.kp := riseTime / (k * (lambda + deadTime));
     GVL.ki := GVL.kp / MIN(riseTime, k1 * (lambda + deadTime));
     GVL.kd := 0;
-    IF stabilized THEN
-        RETURN;
-    END_IF
+	
+	GVL.doTuning := FALSE;		// Let PID controller take over as we are done tuning
 END_IF
 
-GVL.iHeaterActuator := currentOutput;
-
-skippedDeltaTime := 0;
-iOutput := currentOutput;
-]]></ST>
+GVL.iHeaterActuator := currentOutput;	// Apply current output to actuator
+iOutput := currentOutput;]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

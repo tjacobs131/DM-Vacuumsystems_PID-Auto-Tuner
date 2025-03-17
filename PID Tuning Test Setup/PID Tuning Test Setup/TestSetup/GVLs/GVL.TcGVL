@@ -2,29 +2,33 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <GVL Name="GVL" Id="{55000c09-fd3e-4ef2-bc8e-0182699637fa}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL PERSISTENT
+	// PID variables are stored so the tuner does not have to run each time
+	kp: REAL := 0.196;
+	ki: REAL := 0.00326;
+	kd: REAL := 0;
+END_VAR
+
 VAR_GLOBAL
-	rTempSensor: REAL := 0.0;	// Temperature (°C)
 	iHeaterActuator: INT := 0;	// Heater power (0-100%)
 	rSetpoint: REAL := 60.0;	// Target temperature (°C)
 	
-	iRealPower: INT := 0;
+	rTempSensor: REAL := 0.0;	// Temperature (°C)
+	iRealPower: INT := 0;		// Actual heater power (W)
 	
+	// Data arrays for logging
 	arTempData: ARRAY[0..20000] OF REAL;
+	arSetpointData: ARRAY[0..20000] OF REAL;
 	arControllerData: ARRAY[0..20000] OF INT;
 	arRealPowerData: ARRAY[0..20000] OF INT;
 	currentIndex: INT := 0;		// Global index to add data to data arrays
 	iMaxIndex: INT := 20000 - 1;
 	
-	cyclesToSkip: INT := 150;
+	// Limit run rate
+	cyclesToSkip: INT := 180;
 	currentCycle: INT := 0;
 	
-	kp: REAL := 0.196;
-	ki: REAL := 0.00326;
-	kd: REAL := 0;
-	rSetpointPower: INT;
-	
-	powerSlope: REAL := 1;
-	powerIntercept: REAL := 0;
+	doTuning: BOOL := TRUE; 	// Whether or not to run the tuner
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

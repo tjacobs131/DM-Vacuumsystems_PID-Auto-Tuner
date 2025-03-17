@@ -6,7 +6,6 @@
 TYPE TunePhase :
 (
 	init,
-	linearizeOutput,
 	baseline,
 	step,
 	done

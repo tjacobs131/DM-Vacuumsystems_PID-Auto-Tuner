@@ -6,12 +6,14 @@ VAR
 	wRealPower AT %I*: WORD := 0;
 	iTemperatureSensor AT %I*: INT := 0;
 	byHeaterActuator AT %Q*: BYTE := 0;
+	
+	convertedActuator: INT := 0;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[GVL.rTempSensor := INT_TO_REAL(iTemperatureSensor) / 10;
-byHeaterActuator := REAL_TO_BYTE((GVL.iHeaterActuator * 50) / 100);
-GVL.iRealPower := WORD_TO_INT(wRealPower);]]></ST>
+GVL.iRealPower := WORD_TO_INT(wRealPower);
+byHeaterActuator := REAL_TO_BYTE((GVL.iHeaterActuator * 50) / 100);]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

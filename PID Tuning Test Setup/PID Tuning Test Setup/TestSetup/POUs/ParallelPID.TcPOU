@@ -21,9 +21,6 @@ VAR
 	
 	integral: REAL := 0.0;			// Previous iteration's integral
 	rollbackIntegral: REAL := 0.0;	// This iterations integral for rollback
-	
-	currentCycle: INT;
-	skippedDeltaTime: REAL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -45,26 +42,7 @@ ELSIF iOutput <= MIN_OUTPUT THEN
 	integral := rollbackIntegral;
 END_IF
 				
-lastOutput := iOutput;
-
-// Skip some portion of cycles
-// This prevents data arrays from filling too quick
-IF currentCycle < GVL.cyclesToSkip THEN
-	currentCycle := currentCycle + 1;
-	skippedDeltaTime := skippedDeltaTime + rDeltaTime;
-	RETURN; // Skip cycle
-ELSE
-	currentCycle := 0;
-END_IF
-
-GVL.arTempData[GVL.currentIndex] := rFeedbackVariable;
-GVL.arControllerData[GVL.currentIndex] := iOutput;
-GVL.arRealPowerData[GVL.currentIndex] := GVL.iRealPower;
-
-GVL.currentIndex := GVL.currentIndex + 1;
-IF GVL.currentIndex > GVL.iMaxIndex THEN
-	GVL.currentIndex := 0;
-END_IF]]></ST>
+lastOutput := iOutput;]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

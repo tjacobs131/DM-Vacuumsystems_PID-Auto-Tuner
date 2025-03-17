@@ -6,8 +6,11 @@ VAR
 	currentCycle: INT := 0;
 	cycleCount: INT := 0;
 	switch: BOOL := FALSE;
+	
 END_VAR
-]]></Declaration>
+VAR_OUTPUT
+	currentOutput: INT := 0;
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[IF currentCycle < GVL.cyclesToSkip THEN
 	currentCycle := currentCycle + 1;
@@ -17,22 +20,19 @@ ELSE
 END_IF
 
 cycleCount := cycleCount + 1;
-GVL.arControllerData[GVL.currentIndex] := GVL.iHeaterActuator;
-GVL.arTempData[GVL.currentIndex] := GVL.rTempSensor;
-GVL.arRealPowerData[GVL.currentIndex] := GVL.iRealPower;
-GVL.currentIndex := GVL.currentIndex + 1;
 
-IF NOT switch AND GVL.iHeaterActuator = 100 THEN
+IF NOT switch AND currentOutput = 100 THEN
 	switch := TRUE;
 END_IF
 
-IF cycleCount MOD 100 = 0 THEN
+IF cycleCount >= 25 THEN
 	IF switch THEN
-		GVL.iHeaterActuator := GVL.iHeaterActuator - 50;
+		currentOutput := currentOutput - 10;
 	ELSE
-		GVL.iHeaterActuator := GVL.iHeaterActuator + 50;
+		currentOutput := currentOutput + 10;
 	END_IF
-
+	
+	cycleCount := 0;
 END_IF]]></ST>
     </Implementation>
   </POU>
