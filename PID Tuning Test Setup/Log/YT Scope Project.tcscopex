@@ -26,7 +26,7 @@
   <ImagesDeleteMode>Disabled</ImagesDeleteMode>
   <Layout>&lt;?xml version="1.0" encoding="utf-16"?&gt;
 &lt;Layout&gt;
-  &lt;Window Guid="4f86aee8-6b67-491d-97b9-ce0466beafdd" LastFocused="133867719195266093" DockedSize="200" PopupSize="0" FloatingLocation="-1, -1" FloatingSize="550, 400" LastOpenDockSituation="Document" LastFixedDockSituation="Document" LastFixedDockLocation="Right" LastFloatingWindowGuid="00000000-0000-0000-0000-000000000000" LastDockContainerCount="0" LastDockContainerIndex="0" DockedWorkingSize="250, 400" DockedWindowGroupGuid="00000000-0000-0000-0000-000000000000" DockedIndexInWindowGroup="0" DockedSplitPath="0" DocumentWorkingSize="250, 400" DocumentWindowGroupGuid="b03a5895-6a4f-4308-a6a8-d3ae5aa5a246" DocumentIndexInWindowGroup="0" DocumentSplitPath="0" FloatingWorkingSize="250, 400" FloatingWindowGroupGuid="00000000-0000-0000-0000-000000000000" FloatingIndexInWindowGroup="0" FloatingSplitPath="0" /&gt;
+  &lt;Window Guid="4f86aee8-6b67-491d-97b9-ce0466beafdd" LastFocused="133867767162782085" DockedSize="200" PopupSize="0" FloatingLocation="-1, -1" FloatingSize="550, 400" LastOpenDockSituation="Document" LastFixedDockSituation="Document" LastFixedDockLocation="Right" LastFloatingWindowGuid="00000000-0000-0000-0000-000000000000" LastDockContainerCount="0" LastDockContainerIndex="0" DockedWorkingSize="250, 400" DockedWindowGroupGuid="00000000-0000-0000-0000-000000000000" DockedIndexInWindowGroup="0" DockedSplitPath="0" DocumentWorkingSize="250, 400" DocumentWindowGroupGuid="b03a5895-6a4f-4308-a6a8-d3ae5aa5a246" DocumentIndexInWindowGroup="0" DocumentSplitPath="0" FloatingWorkingSize="250, 400" FloatingWindowGroupGuid="00000000-0000-0000-0000-000000000000" FloatingIndexInWindowGroup="0" FloatingSplitPath="0" /&gt;
   &lt;DocumentContainer Dock="5"&gt;
     &lt;SplitLayoutSystem WorkingSize="250, 400" SplitMode="0"&gt;
       &lt;ControlLayoutSystem WorkingSize="250, 400" Guid="b03a5895-6a4f-4308-a6a8-d3ae5aa5a246" Collapsed="0" SelectedControl="4f86aee8-6b67-491d-97b9-ce0466beafdd"&gt;
@@ -77,7 +77,7 @@
           <DataType>REAL32</DataType>
           <DisplayColor>Black</DisplayColor>
           <Enabled>true</Enabled>
-          <FileHandle>1</FileHandle>
+          <FileHandle>0</FileHandle>
           <ForceOversampling>false</ForceOversampling>
           <Guid>60fbcfa5-6b6b-4437-81d2-2984723d3050</Guid>
           <IndexGroup>16448</IndexGroup>
@@ -159,7 +159,7 @@
           <DataType>REAL32</DataType>
           <DisplayColor>Black</DisplayColor>
           <Enabled>true</Enabled>
-          <FileHandle>2</FileHandle>
+          <FileHandle>0</FileHandle>
           <ForceOversampling>false</ForceOversampling>
           <Guid>604d6450-baf5-40ba-b07f-b34a4ad08827</Guid>
           <IndexGroup>16448</IndexGroup>
@@ -241,7 +241,7 @@
           <DataType>INT16</DataType>
           <DisplayColor>Black</DisplayColor>
           <Enabled>true</Enabled>
-          <FileHandle>3</FileHandle>
+          <FileHandle>0</FileHandle>
           <ForceOversampling>false</ForceOversampling>
           <Guid>708da706-15b7-446b-af54-d27d4afe63fd</Guid>
           <IndexGroup>16448</IndexGroup>
@@ -323,7 +323,7 @@
           <DataType>INT16</DataType>
           <DisplayColor>Black</DisplayColor>
           <Enabled>true</Enabled>
-          <FileHandle>4</FileHandle>
+          <FileHandle>0</FileHandle>
           <ForceOversampling>false</ForceOversampling>
           <Guid>5f376adf-f998-4c5f-a8a4-5842737eb821</Guid>
           <IndexGroup>16448</IndexGroup>
@@ -915,7 +915,7 @@
                       <FillColor>855605248</FillColor>
                       <FillMode>None</FillMode>
                       <Guid>ee8d1959-93e1-4173-afec-e3c2c6e53768</Guid>
-                      <LineWidth>2</LineWidth>
+                      <LineWidth>4</LineWidth>
                       <MarkColor>-32768</MarkColor>
                       <MarkSize>2</MarkSize>
                       <MarkState>Auto</MarkState>

@@ -16,7 +16,7 @@ VAR_GLOBAL
 	rTempSensor: REAL := 0.0;	// Temperature (°C)
 	iRealPower: INT := 0;		// Actual heater power (W)
 	
-	doTuning: BOOL := FALSE; 	// Whether or not to run the tuner
+	doTuning: BOOL := TRUE; 	// Whether or not to run the tuner
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

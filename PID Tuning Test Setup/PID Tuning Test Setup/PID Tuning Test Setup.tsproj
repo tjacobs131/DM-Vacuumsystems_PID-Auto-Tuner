@@ -71,7 +71,7 @@
 				<Latitude></Latitude>
 			</AddiStreamDescription>
 			<SystemAlias></SystemAlias>
-			<DataLogger GUID="{B91F0052-7519-EA3B-0408-F4EF6DE277DA}">
+			<DataLogger GUID="{32F12C27-3162-F55B-3741-554B280C1992}">
 				<Name>Data Logger 1</Name>
 				<Name>Data Logger 1</Name>
 				<ParameterValues>
@@ -120,16 +120,6 @@
 				<Stream Caller="#x08502001" Adi="#x08502000" Id="#x02040002" CntAds="#x00000020" CntFile="#x00000010" CntRing="#x00000002" SamplingDivider="1">
 					<Name>TestSetup.TestSetup Instance.PlcTask</Name>
 					<DisplayName>PlcStream1</DisplayName>
-					<LoggerObject Enabled="true">
-						<AreaName></AreaName>
-						<SymName></SymName>
-						<HierName>PlcTask Inputs</HierName>
-					</LoggerObject>
-					<LoggerObject Enabled="true">
-						<AreaName></AreaName>
-						<SymName></SymName>
-						<HierName>PlcTask Outputs</HierName>
-					</LoggerObject>
 					<FileDir>%TC_BOOTPRJPATH%</FileDir>
 				</Stream>
 			</DataLogger>
