@@ -71,9 +71,9 @@
 				<Latitude></Latitude>
 			</AddiStreamDescription>
 			<SystemAlias></SystemAlias>
-			<DataLogger GUID="{B8897587-E6E8-8669-7F30-C21B68AA876E}">
+			<DataLogger GUID="{B91F0052-7519-EA3B-0408-F4EF6DE277DA}">
 				<Name>Data Logger 1</Name>
-				<Name></Name>
+				<Name>Data Logger 1</Name>
 				<ParameterValues>
 					<Value>
 						<Name>Data Format</Name>
