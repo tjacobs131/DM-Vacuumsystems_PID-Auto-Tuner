@@ -53,6 +53,10 @@ Explain test-setup in report
 Add test-setup step test to report
 Add setpoint to visualization
 Create filewriter for data measurement
+Set up twincat scope
+Create corrosponding filereader
+Debug filereader and writer
+Create directory on filewrite error
 
 # ?
     - Parameters
