@@ -10,10 +10,10 @@ VAR_OUTPUT
 END_VAR
 
 VAR
-    loadConfig: BOOL := TRUE; 		// Use stored system dynamics if true
+    loadConfig: BOOL := FALSE; 		// Use stored system dynamics if true
 
     k1: REAL := 3.0;				
-    lambda: REAL := 0.0;    		// Measured dead time or delta time
+    lambda: REAL := 0.0;    		// Measured dead time or delta time, whichever is higher
 	
 	// Stability check
 	checkStability: CheckStability;
@@ -24,12 +24,8 @@ VAR
     
 	// Controller output
 	currentOutput: INT := 0;
-    baselineOutput: INT := 4;
-    stepOutput: INT := 6;
-	
-	// System dynamics measurement data
-    arTemp: ARRAY[0..10000] OF REAL;
-    arTime: ARRAY[0..10000] OF REAL;
+    baselineOutput: INT := 5;
+    stepOutput: INT := 20;
     currentIndex: INT := 0;
 	
     // Variables for asynchronous batch writing
@@ -91,8 +87,8 @@ IF tuningPhase = TunePhase.baseline OR tuningPhase = TunePhase.step THEN
 	IF NOT (lastTemp = rFeedbackVariable)
 		AND NOT batchWritePending THEN
 		lastTemp := rFeedbackVariable;
-		batchTemp[currentIndex] := rFeedbackVariable;
-		batchTime[currentIndex] := INT_TO_REAL(REAL_TO_INT(skippedTime * 100.0 + 0.05)) / 100.0;
+		batchTemp[currentIndex] := INT_TO_REAL(REAL_TO_INT(rFeedbackVariable * 100.0 + 0.05)) / 100.0; // Round feedback variable to two decimal places
+		batchTime[currentIndex] := INT_TO_REAL(REAL_TO_INT(skippedTime * 100.0 + 0.05)) / 100.0; // Round delta time to two decimal places
 		skippedTime := 0;
 		validEntries := currentIndex;
 		
@@ -113,15 +109,15 @@ TunePhase.init:
 	currentOutput := 0; // Ensure output is off
 	
 	IF loadConfig THEN
-		tuningPhase := TunePhase.processData;	// Skip tuning if using stored variables
+		tuningPhase := TunePhase.done;	// Skip tuning if using stored variables
 		RETURN;
 	END_IF
 	
     // Wait for stabilization before starting tuning.
     checkStability(rCurrentValue := rFeedbackVariable, 
                    rDeltaTime := rDeltaTime, 
-                   rThreshold := 0.2, 
-                   rDuration := 30,
+                   rThreshold := 2.2, 
+                   rDuration := 10,
                    rInitialValue := -99.9, 
                    bIsStable => stabilized);
     IF stabilized THEN
@@ -176,6 +172,7 @@ TunePhase.processData:
 						lowestTemp := batchTemp[i];
 					END_IF;
 					IF batchTemp[i] > lowestTemp + 0.002 * (stepTemp - lowestTemp) THEN
+						deadTime := deadTime + batchTime[i];
 						deadTimeFound := TRUE;
 					ELSE
 						deadTime := deadTime + batchTime[i];
@@ -194,7 +191,8 @@ TunePhase.processData:
 					EXIT;
 				END_IF;
 			END_FOR;
-			
+		ELSE
+			tuningPhase := TunePhase.done;
 		END_IF;		
 
     END_IF;
@@ -223,7 +221,7 @@ VAR_OUTPUT
     validEntries : INT;
 END_VAR
 VAR
-    sPath   : STRING(80) := 'C:\Temp\DataLog.txt';
+    sPath   : STRING(80) := 'C:\PIDTuner\DataLog.txt';
     sNetId  : T_AmsNetId := ''; // Target system (empty is local)
     
     hashPos : INT;
@@ -252,7 +250,7 @@ END_VAR
         <ST><![CDATA[CASE state OF
 0:  // Open file (needs to run 1 cycle)
     fbOpen(bExecute:=FALSE);
-	fbOpen(sNetId:=sNetId, sPathName:=sPath, nMode:=FOPEN_MODEREAD, ePath:=PATH_GENERIC, bExecute:=TRUE);
+	fbOpen(sNetId:=sNetId, sPathName:=sPath, nMode:=FOPEN_MODEREAD OR FOPEN_MODETEXT, ePath:=PATH_GENERIC, bExecute:=TRUE);
     state := 1;
 	returnState := 1;
 	
@@ -314,7 +312,7 @@ END_VAR
     END_IF;
 
 5:  // Done/Error
-    M_ReadData := FALSE;
+    M_ReadData := TRUE;
 	
 100: // Wait
 	IF waitCounter < 10 THEN
@@ -337,7 +335,8 @@ VAR_INPUT
 	clearFile: BOOL := FALSE;
 END_VAR
 VAR
-    sPath   : STRING(80) := 'C:\Temp\DataLog.txt';
+    sPath   : STRING(80) := 'C:\PIDTuner\DataLog.txt';
+	sDirName: STRING(80) := 'C:\PIDTuner\';
     sNetId  : T_AmsNetId := '';  // Target system (empty is local)
     i       : INT;
 END_VAR
@@ -347,128 +346,164 @@ VAR_STAT
 	fbOpen : FB_FileOpen;
     fbWrite: FB_FileWrite;
     fbClose: FB_FileClose;
+	fbCreateDir: FB_CreateDir;
     state : INT := 0;  // 0: open, 1: write temp, 2: write time, 3: close, 4: error
+	
+	waitCounter : INT := 0;
+	returnState: INT := 0;
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[CASE state OF
-    0: 
-		IF NOT clearFile THEN
-			 // Open file in append mode
-			 fbOpen(
-				 sNetId := sNetId,
-				 sPathName := sPath,
-				 nMode := FOPEN_MODEAPPEND OR FOPEN_MODETEXT,
-				 ePath := PATH_GENERIC,
-				 bExecute := TRUE
-			 );
-			 IF NOT fbOpen.bBusy THEN
-				 IF fbOpen.bError THEN
-					 state := 4;
-					 M_WriteData := FALSE;
-				 ELSE
-					 hFile := fbOpen.hFile;
-					 state := 1;
-				 END_IF;
-				 fbOpen(bExecute := FALSE);
-			 END_IF;
-		ELSE
-			// Clears the contents of the file
-			fbOpen(
-				 sNetId := sNetId,
-				 sPathName := sPath,
-				 nMode := FOPEN_MODEWRITE OR FOPEN_MODETEXT,
-				 ePath := PATH_GENERIC,
-				 bExecute := TRUE
-			 );
-			 IF NOT fbOpen.bBusy THEN
-				 IF fbOpen.bError THEN
-					 state := 4;
-					 M_WriteData := FALSE;
-				 ELSE
-					 hFile := fbOpen.hFile;
-					 state := 3; // Only clear contents
-				 END_IF;
-				 fbOpen(bExecute := FALSE);
-			 END_IF;
-		END_IF
-
+    0: // Open file
+         fbOpen(bExecute := FALSE);
+         IF NOT clearFile THEN
+             fbOpen(
+                 sNetId   := sNetId,
+                 sPathName:= sPath,
+                 nMode    := FOPEN_MODEAPPEND OR FOPEN_MODETEXT,
+                 ePath    := PATH_GENERIC,
+                 bExecute := TRUE
+             );
+         ELSE
+             fbOpen(
+                 sNetId   := sNetId,
+                 sPathName:= sPath,
+                 nMode    := FOPEN_MODEWRITE OR FOPEN_MODETEXT,
+                 ePath    := PATH_GENERIC,
+                 bExecute := TRUE
+             );
+         END_IF;
+         returnState := 10;
+         state       := 100;
          
-    1: // Build CSV line: tempData values, '#' delimiter, then timeData values, then newline
-		// Each new line represents a batch
+    10: // Check file open result
+         fbOpen(bExecute := FALSE);
+         IF NOT fbOpen.bBusy THEN
+             IF fbOpen.bError THEN
+                 state       := 4;
+                 M_WriteData := FALSE;
+             ELSE
+                 hFile := fbOpen.hFile;
+                 IF clearFile THEN
+                     state := 60; // Directly close file when clearing
+                 ELSE
+                     state := 20; // Proceed to build CSV
+                 END_IF;
+             END_IF;
+             fbOpen(bExecute := FALSE);
+         END_IF;
+         
+    20: // Build CSV line for tempData and write it
          sLine := '';
-         // Append tempData values
          FOR i := 0 TO validEntries - 1 DO
              sLine := CONCAT(sLine, REAL_TO_STRING(tempData[i]));
              IF i < validEntries - 1 THEN
                  sLine := CONCAT(sLine, ',');
              END_IF;
          END_FOR;
-		 
-         // Append delimiter
-         sLine := CONCAT(sLine, '#');
-         
+         sLine := CONCAT(sLine, '#'); // Append delimiter
+         fbWrite(bExecute := FALSE);
          fbWrite(
-             sNetId := sNetId,
-             hFile := hFile,
+             sNetId     := sNetId,
+             hFile      := hFile,
              pWriteBuff := ADR(sLine),
              cbWriteLen := INT_TO_UDINT(LEN(sLine)),
-             bExecute := TRUE
+             bExecute   := TRUE
          );
+         returnState := 30;
+         state       := 100;
+         
+    30: // Check write result for tempData
+         fbWrite(bExecute := FALSE);
          IF NOT fbWrite.bBusy THEN
              IF fbWrite.bError THEN
-                 state := 4;
+                 state       := 4;
                  M_WriteData := FALSE;
              ELSE
-                 state := 2;
+                 state := 40;
              END_IF;
              fbWrite(bExecute := FALSE);
          END_IF;
-    2:
-		sLine := ''; // Clear string
-			
-		// Append timeData values
-		FOR i := 0 TO validEntries - 1 DO
-		 sLine := CONCAT(sLine, REAL_TO_STRING(timeData[i]));
-		 IF i < validEntries - 1 THEN
-			 sLine := CONCAT(sLine, ',');
-		 END_IF;
-		END_FOR;
-		
-		// Append newline
-		sLine := CONCAT(sLine, '$n');
-		
-		// Write line (batch) to file
-		fbWrite(
-             sNetId := sNetId,
-             hFile := hFile,
+         
+    40: // Build CSV line for timeData (append newline) and write it
+         sLine := '';
+         FOR i := 0 TO validEntries - 1 DO
+             sLine := CONCAT(sLine, REAL_TO_STRING(timeData[i]));
+             IF i < validEntries - 1 THEN
+                 sLine := CONCAT(sLine, ',');
+             END_IF;
+         END_FOR;
+         sLine := CONCAT(sLine, '$n'); // Append newline
+         fbWrite(bExecute := FALSE);
+         fbWrite(
+             sNetId     := sNetId,
+             hFile      := hFile,
              pWriteBuff := ADR(sLine),
              cbWriteLen := INT_TO_UDINT(LEN(sLine)),
-             bExecute := TRUE
+             bExecute   := TRUE
          );
+         returnState := 50;
+         state       := 100;
+         
+    50: // Check write result for timeData
+         fbWrite(bExecute := FALSE);
          IF NOT fbWrite.bBusy THEN
              IF fbWrite.bError THEN
-                 state := 4;
+                 state       := 4;
                  M_WriteData := FALSE;
              ELSE
-                 state := 3;
+                 state := 60;
              END_IF;
              fbWrite(bExecute := FALSE);
          END_IF;
-    3: // Close file
+         
+    60: // Close file
+         fbClose(bExecute := FALSE);
          fbClose(
-             sNetId := sNetId,
-             hFile := hFile,
+             sNetId   := sNetId,
+             hFile    := hFile,
              bExecute := TRUE
          );
+         returnState := 70;
+         state       := 100;
+         
+    70: // Check file close result
+         fbClose(bExecute := FALSE);
          IF NOT fbClose.bBusy THEN
              fbClose(bExecute := FALSE);
-             state := 0;
+             state       := 0; // Reset state machine for next write
              M_WriteData := TRUE;
          END_IF;
          
-    4: // Error: reset state
-         state := 0;
+    4: // Error state
+         IF fbOpen.nErrId = 1804 THEN
+             fbCreateDir(bExecute := FALSE);
+             fbCreateDir(
+                 sNetId   := sNetId,
+                 sPathName:= sDirName,
+                 ePath    := PATH_GENERIC,
+                 bExecute := TRUE
+             );
+             state := 5;
+             RETURN;
+         END_IF;
+         state       := 0;
          M_WriteData := FALSE;
+         
+    5: // Create directory state
+         fbCreateDir(bExecute := FALSE);
+         IF NOT fbCreateDir.bBusy THEN
+             state := 0;
+         END_IF;
+         
+    100: // Wait state for busy checks
+         IF waitCounter < 10 THEN
+             waitCounter := waitCounter + 1;
+         ELSE
+             waitCounter := 0;
+             state       := returnState;
+         END_IF;
+         
 END_CASE;
 ]]></ST>
       </Implementation>
