@@ -10,15 +10,10 @@ VAR_OUTPUT
 END_VAR
 
 VAR
-    loadConfig: BOOL := FALSE; 		// Use stored system dynamics if true
+    loadConfig: BOOL := TRUE; 		// Use stored system dynamics if true
 
     k1: REAL := 3.0;				
     lambda: REAL := 0.0;    		// Measured dead time or delta time
-
-    // Temperature step-response variables
-    baselineTemp: REAL := 0.0;
-    stepTemp: REAL := 0.0;
-    stepTime: REAL := 0;
 	
 	// Stability check
 	checkStability: CheckStability;
@@ -36,6 +31,17 @@ VAR
     arTemp: ARRAY[0..10000] OF REAL;
     arTime: ARRAY[0..10000] OF REAL;
     currentIndex: INT := 0;
+	
+    // Variables for asynchronous batch writing
+    batchWritePending: BOOL := FALSE;
+	batchSize: INT := 10;
+    batchTemp: ARRAY[0..10] OF REAL;  // holds one batch of temp data
+    batchTime: ARRAY[0..10] OF REAL;  // holds one batch of time data
+	validEntries: INT := 0;
+	lastTemp: REAL := 0.0;
+	skippedTime: REAL := 0.0;
+	
+	waitTime: REAL := 0.0;
 
 	// Processing variables
     lowestTemp: REAL := 9999;
@@ -43,6 +49,8 @@ VAR
     measureTemp: REAL := 0;
     initTemp: REAL := 0.0;
 	i: INT := 0;
+	deadTimeFound: BOOL := FALSE;
+	riseStarted: BOOL := FALSE;
 
     tuningPhase: TunePhase := TunePhase.init; 	// Current tuning phase
 END_VAR
@@ -51,109 +59,149 @@ VAR PERSISTENT
     riseTime: REAL := 0;
     k: REAL := 0;
     deadTime: REAL := 0;
-    
-    // Persistent variables for asynchronous batch writing
-    batchWritePending: BOOL := FALSE;
-    batchTemp: ARRAY[0..50] OF REAL;  // holds one batch of temp data
-    batchTime: ARRAY[0..50] OF REAL;  // holds one batch of time data
+	
+	// Temperature step-response variables
+    baselineTemp: REAL := 0.0;
+    stepTemp: REAL := 0.0;
+
 END_VAR
 // Use temporary arrays for the batch.
 VAR_TEMP
 	j: INT;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//
-//	TODO: Less measurements, maybe on each change?
-//
+      <ST><![CDATA[// If a batch write is pending, call M_WriteData repeatedly until it returns TRUE.
+IF batchWritePending THEN
+    // M_WriteData is asynchronous. It must be called each cycle until it returns TRUE.
+    IF M_WriteData(validEntries := validEntries, tempData := batchTemp, timeData := batchTime, clearFile := FALSE) THEN
+         batchWritePending := FALSE;
+    END_IF;
+END_IF;
 
-IF tuningPhase = TunePhase.init THEN
+IF tuningPhase = TunePhase.baseline OR tuningPhase = TunePhase.step THEN
+	// Check for stability during baseline and step phases
+	checkStability(rCurrentValue := rFeedbackVariable, 
+				   rDeltaTime := rDeltaTime, 
+				   rThreshold := runningStableThreshold, 
+				   rDuration := 30,
+				   rInitialValue := -99.9, 
+				   bIsStable => stabilized);
+	
+	// Save data in batches during baseline and step phases			   
+	IF NOT (lastTemp = rFeedbackVariable)
+		AND NOT batchWritePending THEN
+		lastTemp := rFeedbackVariable;
+		batchTemp[currentIndex] := rFeedbackVariable;
+		batchTime[currentIndex] := INT_TO_REAL(REAL_TO_INT(skippedTime * 100.0 + 0.05)) / 100.0;
+		skippedTime := 0;
+		validEntries := currentIndex;
+		
+		currentIndex := currentIndex + 1;
+		IF currentIndex > batchSize THEN
+			batchWritePending := TRUE;
+			currentIndex := 0;
+		END_IF
+	ELSE
+		skippedTime := skippedTime + rDeltaTime;
+	END_IF
+	
+END_IF
+
+CASE tuningPhase OF
+TunePhase.init:
+
 	currentOutput := 0; // Ensure output is off
 	
 	IF loadConfig THEN
-		tuningPhase := TunePhase.done;	// Skip tuning if using stored variables
+		tuningPhase := TunePhase.processData;	// Skip tuning if using stored variables
 		RETURN;
 	END_IF
 	
     // Wait for stabilization before starting tuning.
     checkStability(rCurrentValue := rFeedbackVariable, 
                    rDeltaTime := rDeltaTime, 
-                   rThreshold := 0.4, 
-                   rDuration := 15,
+                   rThreshold := 0.2, 
+                   rDuration := 30,
                    rInitialValue := -99.9, 
-                   bIsStable => stabilized, 
-                   rStabilizedOutput => stableTemp);
+                   bIsStable => stabilized);
     IF stabilized THEN
+		M_WriteData(validEntries := validEntries, tempData := batchTemp, timeData := batchTime, clearFile := TRUE); // Clear data file
         tuningPhase := TunePhase.baseline;
 		currentOutput := baselineOutput;
-		initTemp := stableTemp;
+		initTemp := rFeedbackVariable;
+		lastTemp := rFeedbackVariable;
         stabilized := FALSE;
     ELSE
         RETURN;
     END_IF
 
-ELSIF tuningPhase = TunePhase.baseline THEN
-	// Collect data in baseline phase
-	arTime[currentIndex] := rDeltaTime;
-	arTemp[currentIndex] := GVL.rTempSensor;
-	currentIndex := currentIndex + 1;	
+TunePhase.baseline:
 
-    IF stabilized THEN
+	IF stabilized THEN
 		tuningPhase := TunePhase.step;
         currentOutput := stepOutput;
-		baselineTemp := stableTemp;
-		initTemp := stableTemp;
+		baselineTemp := rFeedbackVariable;
+		initTemp := rFeedbackVariable;
         stabilized := FALSE;
     END_IF
 	
-ELSIF tuningPhase = TunePhase.step THEN
-	// Collect data in step phase
-	arTime[currentIndex] := rDeltaTime;
-	arTemp[currentIndex] := GVL.rTempSensor;
-	currentIndex := currentIndex + 1;
-	IF currentIndex > 9999 THEN
-		currentIndex := 0;
-	END_IF		
+TunePhase.step:
 
-    IF stabilized THEN
-        stepTemp := stableTemp;
-        k := (stepTemp - baselineTemp) / (stepOutput - baselineOutput);
-		
-        // Compute dead-time
-        deadTime := 0.0;
-        riseTime := 0.0;
-        lowestTemp := 9999;
-        FOR i := 0 TO currentIndex - 1 DO
-            IF arTemp[i] < lowestTemp THEN
-                lowestTemp := arTemp[i];
-            END_IF;
-            IF arTemp[i] > lowestTemp + 0.002 * (stepTemp - lowestTemp) THEN
-                EXIT;
-            ELSE
-                deadTime := deadTime + arTime[i];
-            END_IF;
-        END_FOR;
-		
-        // Compute rise-time (63.2% response)
-        measureTemp := baselineTemp + 0.632 * (stepTemp - baselineTemp);
-        baselineTime := 0.0;
-        FOR i := 0 TO currentIndex - 1 DO
-            riseTime := riseTime + arTime[i];
-            IF arTemp[i] > baselineTemp THEN 
-                baselineTime := riseTime;
-                baselineTemp := 3.402823E+38; // Lock value
-            END_IF;
-            IF arTemp[i] > measureTemp THEN
-                EXIT;
-            END_IF;
-        END_FOR;
-        riseTime := riseTime - baselineTime;
-		
-        tuningPhase := TunePhase.done;
+	IF stabilized THEN
+		IF NOT (currentIndex = 0) THEN
+			batchWritePending := TRUE;
+			validEntries := currentIndex;
+		END_IF;	
+	
+        stepTemp := rFeedbackVariable;
 		currentOutput := 0;
+		tuningPhase := TunePhase.processData;
     END_IF
 	
-ELSIF tuningPhase = TunePhase.done THEN
-    // Calculate final PID gains.
+TunePhase.processData:
+
+	// Wait for the batch to finish writing before processing data
+	IF batchWritePending THEN
+		RETURN;
+	END_IF
+	
+	validEntries := 0;
+	
+    IF M_ReadData(tempData => batchTemp, timeData => batchTime, validEntries => validEntries) THEN
+		IF NOT (validEntries = 0) THEN 
+			
+			FOR i := 0 TO validEntries - 1 DO
+				IF NOT deadTimeFound THEN
+					IF batchTemp[i] < lowestTemp THEN
+						lowestTemp := batchTemp[i];
+					END_IF;
+					IF batchTemp[i] > lowestTemp + 0.002 * (stepTemp - lowestTemp) THEN
+						deadTimeFound := TRUE;
+					ELSE
+						deadTime := deadTime + batchTime[i];
+					END_IF;
+				END_IF;
+	
+				riseTime := riseTime + batchTime[i];
+				IF NOT riseStarted AND batchTemp[i] > baselineTemp THEN 
+					baselineTime := riseTime;
+					riseStarted := TRUE;
+				END_IF;
+				
+				IF batchTemp[i] > baselineTemp + 0.632 * (stepTemp - baselineTemp) THEN
+					riseTime := riseTime - baselineTime;
+					tuningPhase := TunePhase.done;
+					EXIT;
+				END_IF;
+			END_FOR;
+			
+		END_IF;		
+
+    END_IF;
+
+TunePhase.done:
+
+	// Calculate final PID gains.
     k1 := riseTime / (deadTime + deadTime);
     lambda := MAX(deadTime, rDeltaTime);
     GVL.kp := riseTime / (k * (lambda + deadTime));
@@ -162,49 +210,135 @@ ELSIF tuningPhase = TunePhase.done THEN
 	
 	GVL.doTuning := FALSE; // Let PID controller take over
 	
-END_IF
+END_CASE
 
-// If at least 101 samples collected and no batch is pending, store the first 101 values
-IF (currentIndex >= 51) AND (NOT batchWritePending) THEN
-    FOR j := 0 TO 50 DO
-         batchTemp[j] := arTemp[j];
-         batchTime[j] := arTime[j];
-    END_FOR;
-    batchWritePending := TRUE;
-END_IF;
-
-// If a batch write is pending, call M_WriteData repeatedly until it returns TRUE.
-IF batchWritePending THEN
-    // M_WriteData is asynchronous. It must be called each cycle until it returns TRUE.
-    IF M_WriteData(tempData := batchTemp, timeData := batchTime) THEN
-         // Write complete. Now shift remaining data (if any) from arTemp and arTime.
-         IF currentIndex > 51 THEN
-              // Shift remaining samples to start of arrays
-              FOR j := 0 TO currentIndex - 51 - 1 DO
-                   arTemp[j] := arTemp[j + 51];
-                   arTime[j] := arTime[j + 51];
-              END_FOR;
-              currentIndex := currentIndex - 51;
-         ELSE
-              currentIndex := 0;
-         END_IF;
-         batchWritePending := FALSE;
-    END_IF;
-END_IF;
-
-GVL.iHeaterActuator := currentOutput;
 iOutput := currentOutput;
 ]]></ST>
     </Implementation>
-    <Method Name="M_WriteData" Id="{626e2e9f-860d-4e7f-a600-8b786b180d29}">
-      <Declaration><![CDATA[METHOD PRIVATE M_WriteData : BOOL
-VAR_INPUT
-    tempData: ARRAY[0..50] OF REAL;
-    timeData: ARRAY[0..50] OF REAL;
+    <Method Name="M_ReadData" Id="{a5abc2d6-dab5-4188-bdf7-24efdc9b38c8}">
+      <Declaration><![CDATA[METHOD PRIVATE M_ReadData : BOOL
+VAR_OUTPUT
+    tempData : ARRAY[0..10] OF REAL;
+    timeData : ARRAY[0..10] OF REAL;
+    validEntries : INT;
 END_VAR
 VAR
     sPath   : STRING(80) := 'C:\Temp\DataLog.txt';
-    sNetId  : T_AmsNetId := '192.168.22.61.1.1';  // Target system (empty is local)
+    sNetId  : T_AmsNetId := ''; // Target system (empty is local)
+    
+    hashPos : INT;
+    tempStr : STRING(100);
+    timeStr : STRING(100);
+    tempVals: ARRAY[0..10] OF STRING(10);
+    timeVals: ARRAY[0..10] OF STRING(10);
+    i       : INT;
+END_VAR
+
+VAR_STAT
+	hFile   : UINT;
+    sLine   : STRING(255);	
+
+	fbOpen  : FB_FileOpen;
+    fbRead  : FB_FileGets;
+    fbClose : FB_FileClose;	
+
+	state   : INT := 0;  // 0: open, 1: read, 2: close, 3: done/error
+	
+	waitCounter : INT := 0;
+	returnState: INT := 0;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE state OF
+0:  // Open file (needs to run 1 cycle)
+    fbOpen(bExecute:=FALSE);
+	fbOpen(sNetId:=sNetId, sPathName:=sPath, nMode:=FOPEN_MODEREAD, ePath:=PATH_GENERIC, bExecute:=TRUE);
+    state := 1;
+	returnState := 1;
+	
+1:	// Open file (after 1 cycle)
+	fbOpen(bExecute:=FALSE);
+	IF NOT fbOpen.bBusy THEN
+        IF fbOpen.bError THEN
+            state := 5;
+            M_ReadData := FALSE;
+        ELSE
+            hFile := fbOpen.hFile;
+            state := 2;
+        END_IF;
+        fbOpen(bExecute:=FALSE);
+    END_IF;
+	
+2:	// Read line (needs 1 cycle)
+	fbRead(sNetId:=sNetId, hFile:=hFile, sLine=>sLine, bExecute:=FALSE);
+	state := 100; // Wait phase
+	returnState := 3;
+
+3:  // Read line (after 1 cycle)
+    fbRead(sNetId:=sNetId, hFile:=hFile, sLine=>sLine, bExecute:=TRUE);
+    IF NOT fbRead.bBusy THEN
+        IF fbRead.bError OR fbRead.bEOF THEN
+            state := 4; // Done or error
+        ELSE
+			IF sLine = '' THEN
+				state := 2;
+				M_ReadData := FALSE;
+				RETURN;
+			END_IF
+            hashPos := FIND(sLine, '#'); // # is the seperator between temp and time data
+            tempStr := LEFT(sLine, hashPos - 1); // Temperature data
+            timeStr := RIGHT(sLine, LEN(sLine) - hashPos); // Time data
+
+            validEntries := SplitCSV(tempStr, ADR(tempVals));
+            FOR i := 0 TO validEntries - 1 DO
+                tempData[i] := STRING_TO_REAL(tempVals[i]);
+            END_FOR
+
+            validEntries := SplitCSV(timeStr, ADR(timeVals));
+            FOR i := 0 TO validEntries - 1 DO
+                timeData[i] := STRING_TO_REAL(timeVals[i]);
+            END_FOR
+
+			state := 2;
+            M_ReadData := TRUE;
+            RETURN; // New batch processed, return true each batch
+        END_IF;
+        fbRead(bExecute:=FALSE);
+    END_IF;
+
+4:  // Close file
+    fbClose(sNetId:=sNetId, hFile:=hFile, bExecute:=TRUE);
+    IF NOT fbClose.bBusy THEN
+        fbClose(bExecute:=FALSE);
+        state := 5;
+    END_IF;
+
+5:  // Done/Error
+    M_ReadData := FALSE;
+	
+100: // Wait
+	IF waitCounter < 10 THEN
+		waitCounter := waitCounter + 1;
+	ELSE
+		waitCounter := 0;
+		state := returnState;
+	END_IF
+
+END_CASE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_WriteData" Id="{626e2e9f-860d-4e7f-a600-8b786b180d29}">
+      <Declaration><![CDATA[METHOD PRIVATE M_WriteData : BOOL
+VAR_INPUT
+	validEntries: INT := 0;
+    tempData: ARRAY[0..10] OF REAL;
+    timeData: ARRAY[0..10] OF REAL;
+	clearFile: BOOL := FALSE;
+END_VAR
+VAR
+    sPath   : STRING(80) := 'C:\Temp\DataLog.txt';
+    sNetId  : T_AmsNetId := '';  // Target system (empty is local)
     i       : INT;
 END_VAR
 VAR_STAT
@@ -213,50 +347,65 @@ VAR_STAT
 	fbOpen : FB_FileOpen;
     fbWrite: FB_FileWrite;
     fbClose: FB_FileClose;
-    state : INT := 0;  // 0: open, 1: write, 2: close, 3: error
+    state : INT := 0;  // 0: open, 1: write temp, 2: write time, 3: close, 4: error
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[CASE state OF
-    0: // Open file in append mode
-         fbOpen(
-             sNetId := sNetId,
-             sPathName := sPath,
-             nMode := FOPEN_MODEAPPEND OR FOPEN_MODETEXT,
-             ePath := PATH_GENERIC,
-             bExecute := TRUE
-         );
-         IF NOT fbOpen.bBusy THEN
-             IF fbOpen.bError THEN
-                 state := 3;
-                 M_WriteData := FALSE;
-             ELSE
-                 hFile := fbOpen.hFile;
-                 state := 1;
-             END_IF;
-             fbOpen(bExecute := FALSE);
-         END_IF;
+    0: 
+		IF NOT clearFile THEN
+			 // Open file in append mode
+			 fbOpen(
+				 sNetId := sNetId,
+				 sPathName := sPath,
+				 nMode := FOPEN_MODEAPPEND OR FOPEN_MODETEXT,
+				 ePath := PATH_GENERIC,
+				 bExecute := TRUE
+			 );
+			 IF NOT fbOpen.bBusy THEN
+				 IF fbOpen.bError THEN
+					 state := 4;
+					 M_WriteData := FALSE;
+				 ELSE
+					 hFile := fbOpen.hFile;
+					 state := 1;
+				 END_IF;
+				 fbOpen(bExecute := FALSE);
+			 END_IF;
+		ELSE
+			// Clears the contents of the file
+			fbOpen(
+				 sNetId := sNetId,
+				 sPathName := sPath,
+				 nMode := FOPEN_MODEWRITE OR FOPEN_MODETEXT,
+				 ePath := PATH_GENERIC,
+				 bExecute := TRUE
+			 );
+			 IF NOT fbOpen.bBusy THEN
+				 IF fbOpen.bError THEN
+					 state := 4;
+					 M_WriteData := FALSE;
+				 ELSE
+					 hFile := fbOpen.hFile;
+					 state := 3; // Only clear contents
+				 END_IF;
+				 fbOpen(bExecute := FALSE);
+			 END_IF;
+		END_IF
+
          
     1: // Build CSV line: tempData values, '#' delimiter, then timeData values, then newline
 		// Each new line represents a batch
          sLine := '';
          // Append tempData values
-         FOR i := 0 TO 50 DO
+         FOR i := 0 TO validEntries - 1 DO
              sLine := CONCAT(sLine, REAL_TO_STRING(tempData[i]));
-             IF i < 50 THEN
+             IF i < validEntries - 1 THEN
                  sLine := CONCAT(sLine, ',');
              END_IF;
          END_FOR;
+		 
          // Append delimiter
          sLine := CONCAT(sLine, '#');
-         // Append timeData values
-         FOR i := 0 TO 50 DO
-             sLine := CONCAT(sLine, REAL_TO_STRING(timeData[i]));
-             IF i < 50 THEN
-                 sLine := CONCAT(sLine, ',');
-             END_IF;
-         END_FOR;
-         // Append newline
-         sLine := CONCAT(sLine, '\r\n');
          
          fbWrite(
              sNetId := sNetId,
@@ -267,15 +416,45 @@ END_VAR]]></Declaration>
          );
          IF NOT fbWrite.bBusy THEN
              IF fbWrite.bError THEN
-                 state := 3;
+                 state := 4;
                  M_WriteData := FALSE;
              ELSE
                  state := 2;
              END_IF;
              fbWrite(bExecute := FALSE);
          END_IF;
-         
-    2: // Close file
+    2:
+		sLine := ''; // Clear string
+			
+		// Append timeData values
+		FOR i := 0 TO validEntries - 1 DO
+		 sLine := CONCAT(sLine, REAL_TO_STRING(timeData[i]));
+		 IF i < validEntries - 1 THEN
+			 sLine := CONCAT(sLine, ',');
+		 END_IF;
+		END_FOR;
+		
+		// Append newline
+		sLine := CONCAT(sLine, '$n');
+		
+		// Write line (batch) to file
+		fbWrite(
+             sNetId := sNetId,
+             hFile := hFile,
+             pWriteBuff := ADR(sLine),
+             cbWriteLen := INT_TO_UDINT(LEN(sLine)),
+             bExecute := TRUE
+         );
+         IF NOT fbWrite.bBusy THEN
+             IF fbWrite.bError THEN
+                 state := 4;
+                 M_WriteData := FALSE;
+             ELSE
+                 state := 3;
+             END_IF;
+             fbWrite(bExecute := FALSE);
+         END_IF;
+    3: // Close file
          fbClose(
              sNetId := sNetId,
              hFile := hFile,
@@ -287,11 +466,40 @@ END_VAR]]></Declaration>
              M_WriteData := TRUE;
          END_IF;
          
-    3: // Error: reset state
+    4: // Error: reset state
          state := 0;
          M_WriteData := FALSE;
 END_CASE;
 ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SplitCSV" Id="{ac005ce8-ebff-429c-8935-90c4bec2193e}">
+      <Declaration><![CDATA[METHOD PRIVATE SplitCSV : INT
+VAR_INPUT
+    input : STRING(100);
+    output: POINTER TO ARRAY[0..10] OF STRING(10);
+END_VAR
+VAR
+    i, count, commaPos: INT;
+    remaining: STRING(100);
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[remaining := input;
+count := 0;
+
+WHILE LEN(remaining) > 0 AND count < 10 DO
+    commaPos := FIND(remaining, ',');
+    IF commaPos = 0 THEN
+        output^[count] := remaining;
+        remaining := '';
+    ELSE
+        output^[count] := LEFT(remaining, commaPos - 1);
+        remaining := RIGHT(remaining, LEN(remaining) - commaPos);
+    END_IF
+    count := count + 1;
+END_WHILE
+
+SplitCSV := count;]]></ST>
       </Implementation>
     </Method>
   </POU>

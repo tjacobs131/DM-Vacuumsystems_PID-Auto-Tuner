@@ -6,6 +6,9 @@
 				<Task Id="3" Priority="20" CycleTime="100000" AmsPort="350" AdtTasks="true">
 					<Name>PlcTask</Name>
 				</Task>
+				<Task Id="4" Priority="1" CycleTime="100000" AmsPort="351" AdtTasks="true">
+					<Name>IOTask</Name>
+				</Task>
 			</Tasks>
 		</System>
 		<Plc>
@@ -61,9 +64,9 @@
 				<Symbol>Outputs.Frm0Ctrl</Symbol>
 				<Symbol>Outputs.Frm0WcCtrl</Symbol>
 				<Symbol>Outputs.DevCtrl</Symbol>
-				<Symbol>PlcTask Inputs.ConvertIO.wRealPower</Symbol>
-				<Symbol>PlcTask Inputs.ConvertIO.iTemperatureSensor</Symbol>
-				<Symbol>PlcTask Outputs.ConvertIO.byHeaterActuator</Symbol>
+				<Symbol>IOTask Inputs.ConvertIO.wRealPower</Symbol>
+				<Symbol>IOTask Inputs.ConvertIO.iTemperatureSensor</Symbol>
+				<Symbol>IOTask Outputs.ConvertIO.byHeaterActuator</Symbol>
 			</Symbols>
 			<AddiStreamDescription>
 				<Address></Address>
@@ -117,9 +120,9 @@
 					<DisplayName>DeviceStream1</DisplayName>
 					<FileDir>%TC_BOOTPRJPATH%</FileDir>
 				</Stream>
-				<Stream Caller="#x08502001" Adi="#x08502000" Id="#x02040002" CntAds="#x00000020" CntFile="#x00000010" CntRing="#x00000002" SamplingDivider="1">
-					<Name>TestSetup.TestSetup Instance.PlcTask</Name>
-					<DisplayName>PlcStream1</DisplayName>
+				<Stream Caller="#x08502002" Adi="#x08502000" Id="#x02040003" CntAds="#x00000020" CntFile="#x00000010" CntRing="#x00000002" SamplingDivider="1">
+					<Name>TestSetup.TestSetup Instance.IOTask</Name>
+					<DisplayName>PlcStream2</DisplayName>
 					<FileDir>%TC_BOOTPRJPATH%</FileDir>
 				</Stream>
 			</DataLogger>
@@ -129,6 +132,6 @@
 		</Io>
 	</Project>
 	<Mappings>
-		<MappingInfo Identifier="{00000000-2001-0850-0020-500840000403}" Id="#x02030010"/>
+		<MappingInfo Identifier="{00000000-2002-0850-0020-500840000403}" Id="#x02030010"/>
 	</Mappings>
 </TcSmProject>

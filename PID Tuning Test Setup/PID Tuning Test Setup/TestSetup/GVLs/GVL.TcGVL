@@ -11,7 +11,7 @@ END_VAR
 
 VAR_GLOBAL
 	iHeaterActuator: INT := 0;	// Heater power (0-100%)
-	rSetpoint: REAL := 35.0;	// Target temperature (°C)
+	rSetpoint: REAL := 0.0;	// Target temperature (°C)
 	
 	rTempSensor: REAL := 0.0;	// Temperature (°C)
 	iRealPower: INT := 0;		// Actual heater power (W)

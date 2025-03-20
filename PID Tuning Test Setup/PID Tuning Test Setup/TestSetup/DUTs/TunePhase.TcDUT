@@ -8,6 +8,7 @@ TYPE TunePhase :
 	init,
 	baseline,
 	step,
+	processData,
 	done
 );
 END_TYPE

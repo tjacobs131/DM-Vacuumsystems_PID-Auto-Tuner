@@ -11,7 +11,6 @@ VAR_INPUT
 END_VAR
 VAR_OUTPUT
     bIsStable         : BOOL;   // TRUE if the buffer is stable
-    rStabilizedOutput : REAL;   // Average of the last 20% of samples
 END_VAR
 VAR
     stable_samples_required : INT;
@@ -84,21 +83,6 @@ IF currentIndex = stable_samples_required THEN
     bIsStable := ((rMax - rMin) < rThreshold + 0.01);
 ELSE
     bIsStable := FALSE;
-END_IF
-
-// Compute the stabilized output as the average of the last 20% of samples.
-IF currentIndex > 0 THEN
-    num_to_average := REAL_TO_INT(0.2 * currentIndex);
-    IF num_to_average < 1 THEN
-        num_to_average := 1;
-    END_IF
-    sum := 0.0;
-    FOR i := currentIndex - num_to_average TO currentIndex - 1 DO
-        sum := sum + stableBuffer[i];
-    END_FOR
-    rStabilizedOutput := sum / num_to_average;
-ELSE
-    rStabilizedOutput := 0.0;
 END_IF
 
 // Now update the timer:

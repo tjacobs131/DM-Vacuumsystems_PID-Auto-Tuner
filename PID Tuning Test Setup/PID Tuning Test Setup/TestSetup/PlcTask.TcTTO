@@ -7,9 +7,6 @@
     <PouCall>
       <Name>MAIN</Name>
     </PouCall>
-    <PouCall>
-      <Name>ConvertIO</Name>
-    </PouCall>
     <TaskFBGuid>{242540ee-4f65-4b49-bb32-ffbcd98aa4c1}</TaskFBGuid>
     <Fb_init>{881d43df-8825-4353-979d-6146ab012bb2}</Fb_init>
     <Fb_exit>{e7686918-d385-4b5c-957a-513baca42311}</Fb_exit>

@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <TcSmItem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.44" ClassName="CNestedPlcProjDef">
 	<Project GUID="{4D035378-D5B5-49C5-8759-EE48E38447A7}" Name="TestSetup" PrjFilePath="..\..\TestSetup\TestSetup.plcproj" TmcFilePath="..\..\TestSetup\TestSetup.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-		<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TestSetup\TestSetup.tmc" TmcHash="{C8890739-D905-9598-7E9E-4BF55D0713A9}">
+		<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TestSetup\TestSetup.tmc" TmcHash="{5B800DA9-5D15-3CBB-C5D3-286D33A1A420}">
 			<Name>TestSetup Instance</Name>
 			<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 			<Vars VarGrpType="1">
-				<Name>PlcTask Inputs</Name>
+				<Name>IOTask Inputs</Name>
 				<Var>
 					<Name>ConvertIO.wRealPower</Name>
 					<Type>WORD</Type>
@@ -16,7 +16,7 @@
 				</Var>
 			</Vars>
 			<Vars VarGrpType="2" AreaNo="1">
-				<Name>PlcTask Outputs</Name>
+				<Name>IOTask Outputs</Name>
 				<Var>
 					<Name>ConvertIO.byHeaterActuator</Name>
 					<Type>BYTE</Type>
@@ -32,6 +32,15 @@
 			<Contexts>
 				<Context>
 					<Id NeedCalleeCall="true">0</Id>
+					<Name>IOTask</Name>
+					<ManualConfig>
+						<OTCID>#x02010040</OTCID>
+					</ManualConfig>
+					<Priority>1</Priority>
+					<CycleTime>10000000</CycleTime>
+				</Context>
+				<Context>
+					<Id NeedCalleeCall="true">1</Id>
 					<Name>PlcTask</Name>
 					<ManualConfig>
 						<OTCID>#x02010030</OTCID>
@@ -41,6 +50,7 @@
 				</Context>
 			</Contexts>
 			<TaskPouOids>
+				<TaskPouOid Prio="1" OTCID="#x08502002"/>
 				<TaskPouOid Prio="20" OTCID="#x08502001"/>
 			</TaskPouOids>
 		</Instance>
@@ -48,11 +58,11 @@
 	<Mappings>
 		<OwnerA Name="TestSetup Instance">
 			<OwnerB Name="TIID^Device 5 (EtherCAT)^Box 5 (NRGC-ECAT)">
-				<Link VarA="PlcTask Inputs^ConvertIO.wRealPower" VarB="Module 1 (RGC1P60CM32GEN)^TxPDO^Real power reading"/>
-				<Link VarA="PlcTask Outputs^ConvertIO.byHeaterActuator" VarB="Module 1 (RGC1P60CM32GEN)^RxPDO^Control level"/>
+				<Link VarA="IOTask Inputs^ConvertIO.wRealPower" VarB="Module 1 (RGC1P60CM32GEN)^TxPDO^Real power reading"/>
+				<Link VarA="IOTask Outputs^ConvertIO.byHeaterActuator" VarB="Module 1 (RGC1P60CM32GEN)^RxPDO^Control level"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 5 (EtherCAT)^Term 1 (EK1100)^Term 4 (EL3314)">
-				<Link VarA="PlcTask Inputs^ConvertIO.iTemperatureSensor" VarB="TC Inputs Channel 1^Value"/>
+				<Link VarA="IOTask Inputs^ConvertIO.iTemperatureSensor" VarB="TC Inputs Channel 1^Value"/>
 			</OwnerB>
 		</OwnerA>
 	</Mappings>
