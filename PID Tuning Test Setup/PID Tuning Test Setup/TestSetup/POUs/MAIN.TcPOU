@@ -12,7 +12,7 @@ VAR
 	
 	deltaTime: REAL := 0.0;
 	
-	skogestadPID: Skogestad;
+	skogestadPID: Skogestad( iTest1:=5) ;
 	parallelPID: ParallelPID;
 	
 	init: BOOL := TRUE;

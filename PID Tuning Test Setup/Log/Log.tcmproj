@@ -7,7 +7,10 @@
     <RootNamespace>Log</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="YT Scope Project.tcscopex">
+    <Content Include="Scope.tcscopex">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="YT Scope Project.svdx">
       <SubType>Content</SubType>
     </Content>
   </ItemGroup>

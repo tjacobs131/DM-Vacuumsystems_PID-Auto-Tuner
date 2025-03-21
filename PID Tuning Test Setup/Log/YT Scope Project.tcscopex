@@ -26,7 +26,7 @@
   <ImagesDeleteMode>Disabled</ImagesDeleteMode>
   <Layout>&lt;?xml version="1.0" encoding="utf-16"?&gt;
 &lt;Layout&gt;
-  &lt;Window Guid="4f86aee8-6b67-491d-97b9-ce0466beafdd" LastFocused="133870116169556931" DockedSize="200" PopupSize="0" FloatingLocation="-1, -1" FloatingSize="550, 400" LastOpenDockSituation="Document" LastFixedDockSituation="Document" LastFixedDockLocation="Right" LastFloatingWindowGuid="00000000-0000-0000-0000-000000000000" LastDockContainerCount="0" LastDockContainerIndex="0" DockedWorkingSize="250, 400" DockedWindowGroupGuid="00000000-0000-0000-0000-000000000000" DockedIndexInWindowGroup="0" DockedSplitPath="0" DocumentWorkingSize="250, 400" DocumentWindowGroupGuid="b03a5895-6a4f-4308-a6a8-d3ae5aa5a246" DocumentIndexInWindowGroup="0" DocumentSplitPath="0" FloatingWorkingSize="250, 400" FloatingWindowGroupGuid="00000000-0000-0000-0000-000000000000" FloatingIndexInWindowGroup="0" FloatingSplitPath="0" /&gt;
+  &lt;Window Guid="4f86aee8-6b67-491d-97b9-ce0466beafdd" LastFocused="133870335537488768" DockedSize="200" PopupSize="0" FloatingLocation="-1, -1" FloatingSize="550, 400" LastOpenDockSituation="Document" LastFixedDockSituation="Document" LastFixedDockLocation="Right" LastFloatingWindowGuid="00000000-0000-0000-0000-000000000000" LastDockContainerCount="0" LastDockContainerIndex="0" DockedWorkingSize="250, 400" DockedWindowGroupGuid="00000000-0000-0000-0000-000000000000" DockedIndexInWindowGroup="0" DockedSplitPath="0" DocumentWorkingSize="250, 400" DocumentWindowGroupGuid="b03a5895-6a4f-4308-a6a8-d3ae5aa5a246" DocumentIndexInWindowGroup="0" DocumentSplitPath="0" FloatingWorkingSize="250, 400" FloatingWindowGroupGuid="00000000-0000-0000-0000-000000000000" FloatingIndexInWindowGroup="0" FloatingSplitPath="0" /&gt;
   &lt;DocumentContainer Dock="5"&gt;
     &lt;SplitLayoutSystem WorkingSize="250, 400" SplitMode="0"&gt;
       &lt;ControlLayoutSystem WorkingSize="250, 400" Guid="b03a5895-6a4f-4308-a6a8-d3ae5aa5a246" Collapsed="0" SelectedControl="4f86aee8-6b67-491d-97b9-ce0466beafdd"&gt;
@@ -1076,6 +1076,86 @@
       <SubMember />
       <Title>TriggerModule_30</Title>
     </TriggerModule>
+    <MarkerContainer AssemblyName="TwinCAT.Measurement.Scope.API.Model">
+      <Comment />
+      <DisplayColor>Black</DisplayColor>
+      <Guid>b975f143-7260-45c8-918d-855956107699</Guid>
+      <Name>Marker Container (3)</Name>
+      <SortPriority>100</SortPriority>
+      <SubMember>
+        <MarkerControlStyle AssemblyName="TwinCAT.Measurement.Scope.API.Model">
+          <AutoMarkerDiffs>false</AutoMarkerDiffs>
+          <Comment />
+          <DisplayColor>Black</DisplayColor>
+          <Guid>3b65aaaa-d729-4075-924e-c44ca06c09c5</Guid>
+          <MarkerInRows>false</MarkerInRows>
+          <Name>Axis Group - Table</Name>
+          <ReferencedMemberGuid>97c2cacc-60b9-4dd8-9e09-0344a86ef43f</ReferencedMemberGuid>
+          <ShowAbsoluteTimes>false</ShowAbsoluteTimes>
+          <ShowColoredDot>true</ShowColoredDot>
+          <ShowColoredText>false</ShowColoredText>
+          <ShowHexValues>false</ShowHexValues>
+          <ShowUnits>false</ShowUnits>
+          <SortPriority>100</SortPriority>
+          <SubMember>
+            <MarkerTable_SingleContainer AssemblyName="TwinCAT.Measurement.Scope.API.Model">
+              <Comment />
+              <DisplayColor>Black</DisplayColor>
+              <Guid>b4916471-943e-4821-b8fc-3611c5be44ba</Guid>
+              <GuidUsedValue>11111111-1111-1111-1111-111111111111</GuidUsedValue>
+              <Name>MarkerTable_SingleContainer_942</Name>
+              <SortPriority>0</SortPriority>
+              <Title>MarkerTable_SingleContainer_942</Title>
+              <Type>Channel</Type>
+            </MarkerTable_SingleContainer>
+            <MarkerTable_SingleContainer AssemblyName="TwinCAT.Measurement.Scope.API.Model">
+              <Comment />
+              <DisplayColor>Black</DisplayColor>
+              <Guid>1bfe2151-f0d1-493f-ad28-8ce1fa134ede</Guid>
+              <GuidUsedValue>b161d2e6-682d-4487-8321-6f897777b5d4</GuidUsedValue>
+              <Name>MarkerTable_SingleContainer_944</Name>
+              <SortPriority>1</SortPriority>
+              <Title>MarkerTable_SingleContainer_944</Title>
+              <Type>Channel</Type>
+            </MarkerTable_SingleContainer>
+            <MarkerTable_SingleContainer AssemblyName="TwinCAT.Measurement.Scope.API.Model">
+              <Comment />
+              <DisplayColor>Black</DisplayColor>
+              <Guid>a2640ae9-605e-4489-81ab-68083f0930eb</Guid>
+              <GuidUsedValue>44fadba6-bd2c-4781-a3ee-e0d94ae3141a</GuidUsedValue>
+              <Name>MarkerTable_SingleContainer_946</Name>
+              <SortPriority>2</SortPriority>
+              <Title>MarkerTable_SingleContainer_946</Title>
+              <Type>Channel</Type>
+            </MarkerTable_SingleContainer>
+            <MarkerTable_SingleContainer AssemblyName="TwinCAT.Measurement.Scope.API.Model">
+              <Comment />
+              <DisplayColor>Black</DisplayColor>
+              <Guid>eda63db4-f5c3-479d-affe-bfcd05328b9e</Guid>
+              <GuidUsedValue>3bb14bdb-18ee-4cac-986d-068a5c193948</GuidUsedValue>
+              <Name>MarkerTable_SingleContainer_948</Name>
+              <SortPriority>3</SortPriority>
+              <Title>MarkerTable_SingleContainer_948</Title>
+              <Type>Channel</Type>
+            </MarkerTable_SingleContainer>
+            <MarkerTable_PairContainer AssemblyName="TwinCAT.Measurement.Scope.API.Model">
+              <Comment />
+              <DisplayColor>Black</DisplayColor>
+              <Guid>a5fbff4a-c274-4f8a-9c8b-3d786c4519c7</Guid>
+              <GuidFirstElement>00000000-0000-0000-0000-000000000000</GuidFirstElement>
+              <GuidSecondElement>00000000-0000-0000-0000-000000000000</GuidSecondElement>
+              <Name>MarkerTable_PairContainer_952</Name>
+              <SortPriority>4</SortPriority>
+              <Title>MarkerTable_PairContainer_952</Title>
+              <Type>Channel</Type>
+            </MarkerTable_PairContainer>
+          </SubMember>
+          <Title>MarkerControlStyle_931</Title>
+          <WidthValues />
+        </MarkerControlStyle>
+      </SubMember>
+      <Title>MarkerContainer_929</Title>
+    </MarkerContainer>
   </SubMember>
   <SynchronisationMode>Default</SynchronisationMode>
   <TargetConnectionIds />

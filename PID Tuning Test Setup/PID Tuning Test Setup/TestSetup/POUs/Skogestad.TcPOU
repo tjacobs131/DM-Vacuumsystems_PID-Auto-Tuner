@@ -21,13 +21,14 @@ END_VAR
 
 VAR
 	// User config
-    loadConfig: BOOL := TRUE; 			// Uses stored system dynamics if true, re-measures the system if false
-	k1Multiplier: REAL := 1.0;			// 1 = slow response, 0.5 = agressive response. Can be lowered further but risks oscillations
-	runningStableThreshold: REAL := 0.1;// Range in which the process variable must stabilize during the baseline and step phases
-	rStableWaitTime: REAL := 20;		// Time in which the process variable must remain stable within the stableThreshold
-	baselineOutput: INT := 5;			// Controller output to make the process variable reach (~50-70%?) of the setpoint
-    stepOutput: INT := 20;				// Controller output to make the process variable reach the setpoint
+    _bLoadConfig: BOOL := TRUE; 			// Uses stored system dynamics if true, re-measures the system if false
+	_rK1Multiplier: REAL := 1.0;			// 1 = slow response, 0.5 = agressive response. Can be lowered further but risks oscillations and overshoot
+	_rRunningStableThreshold: REAL := 0.1;// Range in which the process variable must stabilize during the baseline and step phases
+	_rStableWaitTime: REAL := 20;		// Time in which the process variable must remain stable within the stableThreshold
+	_iBaselineOutput: INT := 5;			// Controller output to make the process variable reach (~50-70%?) of the setpoint
+    _iStepOutput: INT := 20;				// Controller output to make the process variable reach the setpoint
 	
+	_iTest1	:	INT;
 	// Stability check
 	checkStability: CheckStability;	// Function block to check for the stability of the process variable
     stabilized: BOOL := FALSE;		// Are we currently stabilized?
@@ -53,16 +54,18 @@ VAR
 	lambda: REAL := 0.0;    		// Measured dead time or delta time, whichever is higher
 	k1: REAL := 0.0;
 	
+    riseTime: REAL := 0;
+    k: REAL := 0;
+    deadTime: REAL := 0;
+	
 	deadTimeFound: BOOL := FALSE;
 	riseStarted: BOOL := FALSE;
 
     tuningPhase: TunePhase := TunePhase.init; 	// Current tuning phase
 END_VAR
 VAR PERSISTENT 
-    // Store measured system dynamics for recalculation
-    riseTime: REAL := 0;
-    k: REAL := 0;
-    deadTime: REAL := 0;
+    
+	// Store measured system dynamics for recalculation
 	
 	// Temperature step-response variables
     baselineProcessVariable: REAL := 0.0;
@@ -86,7 +89,7 @@ IF tuningPhase = TunePhase.baseline OR tuningPhase = TunePhase.step THEN
 	// Check for stability during baseline and step phases
 	checkStability(rCurrentValue := rFeedbackVariable, 
 				   rDeltaTime := rDeltaTime, 
-				   rThreshold := runningStableThreshold, 
+				   rThreshold := _rRunningStableThreshold, 
 				   rDuration := 30,
 				   rInitialValue := priorStableValue, // Set variable which must be moved away from before stabilizing
 				   bIsStable => stabilized);
@@ -116,8 +119,8 @@ TunePhase.init:
 
 	currentOutput := 0; // Ensure output is off
 	
-	IF loadConfig THEN
-		tuningPhase := TunePhase.done;	// Skip tuning if using stored variables
+	IF _bLoadConfig THEN
+		tuningPhase := TunePhase.processData;	// Skip tuning if using stored variables
 		RETURN;
 	END_IF
 	
@@ -131,7 +134,7 @@ TunePhase.init:
     IF stabilized THEN
 		M_WriteData(validEntries := validEntries, tempData := batchTemp, timeData := batchTime, clearFile := TRUE); // Clear data file
         tuningPhase := TunePhase.baseline;
-		currentOutput := baselineOutput;
+		currentOutput := _iBaselineOutput;
 		priorStableValue := rFeedbackVariable;
 		lastProcessVariable := rFeedbackVariable;
         stabilized := FALSE;
@@ -143,7 +146,7 @@ TunePhase.baseline:
 
 	IF stabilized THEN
 		tuningPhase := TunePhase.step;
-        currentOutput := stepOutput;
+        currentOutput := _iStepOutput;
 		baselineProcessVariable := rFeedbackVariable;
 		priorStableValue := rFeedbackVariable;
         stabilized := FALSE;
@@ -164,6 +167,8 @@ TunePhase.step:
 	
 TunePhase.processData:
 
+	k := (stepProcessVariable - baselineProcessVariable) / (_iStepOutput - _iBaselineOutput);
+	
 	// Wait for the batch to finish writing before processing data
 	IF batchWritePending THEN
 		RETURN;
@@ -180,7 +185,7 @@ TunePhase.processData:
 					IF batchTemp[i] < lowestProcessVariable THEN
 						lowestProcessVariable := batchTemp[i];
 					END_IF;
-					IF batchTemp[i] > lowestProcessVariable + 0.002 * (stepProcessVariable - lowestProcessVariable) THEN
+					IF batchTemp[i] > lowestProcessVariable + 0.005 * (stepProcessVariable - lowestProcessVariable) THEN
 						deadTimeFound := TRUE;
 					ELSE
 						deadTime := deadTime + batchTime[i];
@@ -196,21 +201,19 @@ TunePhase.processData:
 				
 				// Calculate rise time
 				IF batchTemp[i] > baselineProcessVariable + 0.632 * (stepProcessVariable - baselineProcessVariable) THEN // Rise time is defined as 63.2% of total process variable change
-					riseTime := riseTime - baselineTime - deadTime; // Rise time initially contains the total tuning time. Dead time and baseline time should be subtracted from this.
+					riseTime := riseTime - baselineTime; // Rise time initially contains the total tuning time. Dead time and baseline time should be subtracted from this.
 					tuningPhase := TunePhase.done;
 					EXIT;
 				END_IF;
 			END_FOR;
-		ELSE
-			tuningPhase := TunePhase.done;
-		END_IF;		
+		END_IF;
 
     END_IF;
 
 TunePhase.done:
 
 	// Calculate final PID gains.
-    k1 := riseTime / (deadTime + deadTime);
+    k1 := (riseTime / (lambda + deadTime)) * _rK1Multiplier;
     lambda := MAX(deadTime, rDeltaTime);
     GVL.kp := riseTime / (k * (lambda + deadTime));
     GVL.ki := GVL.kp / MIN(riseTime, k1 * (lambda + deadTime));
@@ -223,6 +226,19 @@ END_CASE
 iOutput := currentOutput;
 ]]></ST>
     </Implementation>
+    <Method Name="FB_init" Id="{f0c06880-0956-4c59-bc65-dc99b2fd7b6e}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains 	: BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode 	: BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+
+	iTest1			: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_iTest1		:=	iTest1;]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="M_ReadData" Id="{a5abc2d6-dab5-4188-bdf7-24efdc9b38c8}">
       <Declaration><![CDATA[METHOD PRIVATE M_ReadData : BOOL
 VAR_OUTPUT
