@@ -26,7 +26,7 @@
   <ImagesDeleteMode>Disabled</ImagesDeleteMode>
   <Layout>&lt;?xml version="1.0" encoding="utf-16"?&gt;
 &lt;Layout&gt;
-  &lt;Window Guid="4f86aee8-6b67-491d-97b9-ce0466beafdd" LastFocused="133869504229191984" DockedSize="200" PopupSize="0" FloatingLocation="-1, -1" FloatingSize="550, 400" LastOpenDockSituation="Document" LastFixedDockSituation="Document" LastFixedDockLocation="Right" LastFloatingWindowGuid="00000000-0000-0000-0000-000000000000" LastDockContainerCount="0" LastDockContainerIndex="0" DockedWorkingSize="250, 400" DockedWindowGroupGuid="00000000-0000-0000-0000-000000000000" DockedIndexInWindowGroup="0" DockedSplitPath="0" DocumentWorkingSize="250, 400" DocumentWindowGroupGuid="b03a5895-6a4f-4308-a6a8-d3ae5aa5a246" DocumentIndexInWindowGroup="0" DocumentSplitPath="0" FloatingWorkingSize="250, 400" FloatingWindowGroupGuid="00000000-0000-0000-0000-000000000000" FloatingIndexInWindowGroup="0" FloatingSplitPath="0" /&gt;
+  &lt;Window Guid="4f86aee8-6b67-491d-97b9-ce0466beafdd" LastFocused="133870116169556931" DockedSize="200" PopupSize="0" FloatingLocation="-1, -1" FloatingSize="550, 400" LastOpenDockSituation="Document" LastFixedDockSituation="Document" LastFixedDockLocation="Right" LastFloatingWindowGuid="00000000-0000-0000-0000-000000000000" LastDockContainerCount="0" LastDockContainerIndex="0" DockedWorkingSize="250, 400" DockedWindowGroupGuid="00000000-0000-0000-0000-000000000000" DockedIndexInWindowGroup="0" DockedSplitPath="0" DocumentWorkingSize="250, 400" DocumentWindowGroupGuid="b03a5895-6a4f-4308-a6a8-d3ae5aa5a246" DocumentIndexInWindowGroup="0" DocumentSplitPath="0" FloatingWorkingSize="250, 400" FloatingWindowGroupGuid="00000000-0000-0000-0000-000000000000" FloatingIndexInWindowGroup="0" FloatingSplitPath="0" /&gt;
   &lt;DocumentContainer Dock="5"&gt;
     &lt;SplitLayoutSystem WorkingSize="250, 400" SplitMode="0"&gt;
       &lt;ControlLayoutSystem WorkingSize="250, 400" Guid="b03a5895-6a4f-4308-a6a8-d3ae5aa5a246" Collapsed="0" SelectedControl="4f86aee8-6b67-491d-97b9-ce0466beafdd"&gt;
@@ -613,7 +613,7 @@
             </Channel>
             <Channel AssemblyName="TwinCAT.Measurement.Scope.API.Model">
               <Comment />
-              <DisplayColor>-8323073</DisplayColor>
+              <DisplayColor>SkyBlue</DisplayColor>
               <Enabled>true</Enabled>
               <Guid>44fadba6-bd2c-4781-a3ee-e0d94ae3141a</Guid>
               <Name>rSetpoint</Name>
@@ -680,12 +680,12 @@
                     <SeriesStyle AssemblyName="TwinCAT.Measurement.Scope.API.Model">
                       <Antialias>true</Antialias>
                       <Comment />
-                      <DisplayColor>-8323073</DisplayColor>
-                      <FillColor>847314943</FillColor>
+                      <DisplayColor>SkyBlue</DisplayColor>
+                      <FillColor>847761131</FillColor>
                       <FillMode>None</FillMode>
                       <Guid>1dc17a98-2eed-419a-8e80-a5a5c3c315ba</Guid>
-                      <LineWidth>2</LineWidth>
-                      <MarkColor>-8323073</MarkColor>
+                      <LineWidth>4</LineWidth>
+                      <MarkColor>SkyBlue</MarkColor>
                       <MarkSize>2</MarkSize>
                       <MarkState>Auto</MarkState>
                       <Name>Series Style</Name>
